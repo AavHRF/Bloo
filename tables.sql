@@ -32,4 +32,3 @@ CREATE TABLE IF NOT EXISTS welcome_settings (
     welcome_enabled BOOLEAN,
     PRIMARY KEY (guild_id)
 );
-)
