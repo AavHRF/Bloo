@@ -102,21 +102,30 @@ class NSV(commands.Cog):
             verified_role = ctx.guild.get_role(settings[0]["verified_role"])
             if status == "guest":
                 guest_role = ctx.guild.get_role(settings[0]["guest_role"])
-                await ctx.author.add_roles(
-                    verified_role, guest_role, reason="Verified via NSV."
-                )
+                if not guest_role:
+                    pass
+                else:
+                    await ctx.author.add_roles(
+                        verified_role, guest_role, reason="Verified via NSV."
+                    )
             else:
                 resident_role = ctx.guild.get_role(settings[0]["resident_role"])
-                await ctx.author.add_roles(
-                    verified_role, resident_role, reason="Verified via NSV."
-                )
-                if status == "wa-resident":
-                    wa_resident_role = ctx.guild.get_role(
-                        settings[0]["wa_resident_role"]
-                    )
+                if not resident_role:
+                    pass
+                else:
                     await ctx.author.add_roles(
-                        wa_resident_role, reason="Verified via NSV."
+                        verified_role, resident_role, reason="Verified via NSV."
                     )
+                    if status == "wa-resident":
+                        wa_resident_role = ctx.guild.get_role(
+                            settings[0]["wa_resident_role"]
+                        )
+                        if not wa_resident_role:
+                            pass
+                        else:
+                            await ctx.author.add_roles(
+                                wa_resident_role, reason="Verified via NSV."
+                            )
             await ctx.author.send(welcome_message)
 
         else:
