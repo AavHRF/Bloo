@@ -2,6 +2,7 @@ import asyncio
 import aiohttp
 import discord
 from discord.ext import commands
+from discord import app_commands
 from xml.etree import ElementTree
 from framework.bot import Bloo
 
@@ -133,7 +134,12 @@ class NSV(commands.Cog):
             await ctx.author.add_roles(verified, reason="Verified via NSV.")
 
     @commands.guild_only()
+    @app_commands.guild_only()
     @commands.hybrid_command(with_app_command=True)
+    @commands.cooldown(1, 60, commands.BucketType.user)
+    @app_commands.describe(
+        first_option="Your nation on nationstates.net. Do not include the pretitle."
+    )
     async def verify(self, ctx: commands.Context, *, nation: str):
         """
         Verify your nation
