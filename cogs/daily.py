@@ -16,37 +16,45 @@ class DailyUpdate(commands.Cog):
     def cog_unload(self):
         self.daily_update.cancel()
 
+    # noinspection DuplicatedCode
     @tasks.loop(time=datetime.time(8, 0, 0, 0))
     async def daily_update(self):
-        now_ts = datetime.datetime.now().timestamp()
+        now_ts = datetime.datetime.now()
         async with self.bot.session.get(
             "https://www.nationstates.net/pages/nations.xml.gz"
         ) as resp:
             with open("nations.xml.gz", "wb") as f:
                 f.write(await resp.read())
         with gzip.open("nations.xml.gz", "rb") as f:
-            tree = ElementTree.parse(f)
-        root = tree.getroot()
-        for nation in root.findall("NATION"):
-            name = nation.find("NAME").text
-            region = nation.find("REGION").text
-            unstatus = nation.find("UNSTATUS").text
-            endorsements = nation.find("ENDORSEMENTS").text if nation.find("ENDORSEMENTS") is not None else 0
-            await self.bot.execute(
-                "INSERT INTO nations (nation, region, unstatus, endorsements, last_update) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (nation) DO UPDATE SET region = $2, unstatus = $3, endorsements = $4, last_update = $5",
-                name,
-                region,
-                unstatus,
-                endorsements,
-                now_ts,
-            )
-
+            tree = await asyncio.to_thread(self.parse, f)
+            root = tree.getroot()
+            for nation in root.findall("NATION"):
+                name = nation.find("NAME").text.lower().replace(" ", "_")
+                region = nation.find("REGION").text.lower().replace(" ", "_")
+                unstatus = nation.find("UNSTATUS").text
+                endorsements = (
+                    nation.find("ENDORSEMENTS").text
+                    if nation.find("ENDORSEMENTS") is not None
+                    else 0
+                )
+                await self.bot.execute(
+                    "INSERT INTO nation_dump (nation, region, unstatus, endorsements, last_update) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (nation) DO UPDATE SET region = $2, unstatus = $3, endorsements = $4, last_update = $5",
+                    name,
+                    region,
+                    unstatus,
+                    endorsements,
+                    now_ts,
+                )
         all_guilds = await self.bot.fetch("SELECT guild_id FROM nsv_settings")
         for guild in all_guilds:
             guild_id = guild["guild_id"]
-            guild_obj = self.bot.get_guild(guild_id)
+            guild_obj: discord.Guild = self.bot.get_guild(guild_id)
             if guild_obj is None:
+                print("Could not find guild, skipping...")
                 continue
+            if not guild_obj.chunked:
+                await guild_obj.chunk()
+            print(f"Now updating {guild_obj.name} | ID: ({guild_id})")
             settings = await self.bot.fetch(
                 "SELECT * FROM nsv_settings WHERE guild_id = $1", guild_id
             )
@@ -55,6 +63,7 @@ class DailyUpdate(commands.Cog):
             guild_members = await self.bot.fetch(
                 "SELECT discord_id, nation FROM nsv_table WHERE guild_id = $1", guild_id
             )
+            print(len(guild_members))
             guest_role = guild_obj.get_role(settings[0]["guest_role"])
             wa_resident_role = guild_obj.get_role(settings[0]["wa_resident_role"])
             resident_role = guild_obj.get_role(settings[0]["resident_role"])
@@ -64,13 +73,16 @@ class DailyUpdate(commands.Cog):
                 # Check if the member is still in the guild
                 member_obj = guild_obj.get_member(discord_id)
                 if member_obj is None:
-                    continue
+                    print(f"Could not find member for ID {discord_id}")
+                    member_obj = await self.bot.fetch_user(discord_id)
                 else:
+                    print(f"Checking {nation} | ID: ({discord_id})")
                     vals = await self.bot.fetch(
-                        "SELECT region, unstatus FROM nations WHERE nation = $1",
+                        "SELECT region, unstatus FROM nation_dump WHERE nation = $1",
                         nation,
                     )
                     if not vals:
+                        print("Nation not found, skipping...")
                         continue
                     if vals[0]["region"] != settings[0]["region"]:
                         status = "guest"
@@ -101,9 +113,13 @@ class DailyUpdate(commands.Cog):
                         discord_id,
                         guild_id,
                     )
+            print(f"Updated {guild_obj.name} | ID: ({guild_id})")
+        print("Finished update.")
+
+    @daily_update.before_loop
+    async def before_daily_update(self):
+        await self.bot.wait_until_ready()
 
 
 async def setup(bot: Bloo):
     await bot.add_cog(DailyUpdate(bot))
-
-
