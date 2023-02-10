@@ -138,7 +138,7 @@ class NSV(commands.Cog):
     @commands.hybrid_command(with_app_command=True)
     @commands.cooldown(1, 60, commands.BucketType.user)
     @app_commands.describe(
-        first_option="Your nation on nationstates.net. Do not include the pretitle."
+        nation="Your nation on nationstates.net. Do not include the pretitle."
     )
     async def verify(self, ctx: commands.Context, *, nation: str):
         """
