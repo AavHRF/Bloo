@@ -30,5 +30,6 @@ CREATE TABLE IF NOT EXISTS welcome_settings (
     guild_id BIGINT,
     welcome_channel BIGINT,
     welcome_enabled BOOLEAN,
+    embed_message VARCHAR(500),
     PRIMARY KEY (guild_id)
 );

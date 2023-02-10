@@ -5,7 +5,6 @@ from framework.bot import Bloo
 
 
 class RegionModal(discord.ui.Modal, title="Set Region"):
-
     name = discord.ui.TextInput(
         label="Region Name",
         placeholder="The North Pacific",
@@ -24,9 +23,9 @@ class RegionModal(discord.ui.Modal, title="Set Region"):
         )
 
 
-class WelcomeMessageModal(discord.ui.Modal, title="Set Welcome Message"):
+class VerificationMessageModal(discord.ui.Modal, title="Set Verification Message"):
     message = discord.ui.TextInput(
-        label="Welcome Message",
+        label="Verification Message",
         placeholder="Welcome to The North Pacific!",
         min_length=1,
         max_length=2000,
@@ -39,6 +38,26 @@ class WelcomeMessageModal(discord.ui.Modal, title="Set Welcome Message"):
         bot: Bloo = interaction.client
         await bot.execute(
             "INSERT INTO nsv_settings (guild_id, welcome_message) VALUES ($1, $2) ON CONFLICT (guild_id) DO UPDATE SET welcome_message = $2",
+            interaction.guild.id,
+            self.message.value,
+        )
+
+
+class WelcomeMessageModal(discord.ui.Modal, title="Set Welcome Message"):
+    message = discord.ui.TextInput(
+        label="Welcome Message",
+        placeholder="Welcome to The North Pacific!",
+        min_length=1,
+        max_length=500,
+        style=discord.TextStyle.long,
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.send_message("Submitted!", ephemeral=True)
+        # noinspection PyTypeChecker
+        bot: Bloo = interaction.client
+        await bot.execute(
+            "INSERT INTO welcome_settings (guild_id, embed_message) VALUES ($1, $2) ON CONFLICT (guild_id) DO UPDATE SET welcome_message = $2",
             interaction.guild.id,
             self.message.value,
         )
@@ -81,6 +100,14 @@ class SettingsView(discord.ui.View):
     ):
         await interaction.response.send_modal(RegionModal())
 
+    @discord.ui.button(
+        label="Set Verification DM Message", style=discord.ButtonStyle.blurple, row=4
+    )
+    async def set_welcome_message(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        await interaction.response.send_modal(VerificationMessageModal())
+
     @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Verified Role", row=0)
     async def v(self, interaction: discord.Interaction, select: discord.ui.Select):
         await interaction.response.defer()
@@ -104,10 +131,47 @@ class WelcomeView(discord.ui.View):
         super().__init__(timeout=300)
 
     @discord.ui.select(
-        cls=discord.ui.ChannelSelect, placeholder="Set Welcome Channel", row=0, channel_types=[discord.ChannelType.text]
+        cls=discord.ui.ChannelSelect,
+        placeholder="Set Welcome Channel",
+        row=0,
+        channel_types=[discord.ChannelType.text],
     )
     async def wc(self, interaction: discord.Interaction, select: discord.ui.Select):
         await interaction.response.defer()
+
+    @discord.ui.button(
+        label="Enable/disable leave/join messages",
+        style=discord.ButtonStyle.blurple,
+        row=1,
+    )
+    async def edljm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # noinspection PyTypeChecker
+        bot: Bloo = interaction.client
+        await interaction.response.defer()
+        current_state = await bot.fetch(
+            "SELECT welcome_enabled FROM welcome_settings WHERE guild_id = $1",
+            interaction.guild.id,
+        )
+        if current_state:
+            current_state = current_state[0]["welcome_enabled"]
+        else:
+            current_state = False
+        await bot.execute(
+            "INSERT INTO welcome_settings (guild_id, welcome_enabled) VALUES ($1, $2) ON CONFLICT (guild_id) DO UPDATE SET welcome_enabled = $2",
+            interaction.guild.id,
+            not current_state,
+        )
+        await interaction.followup.send_message(
+            f"Welcome messages are now {'enabled' if not current_state else 'disabled'}"
+        )
+
+    @discord.ui.button(
+        label="Set join message",
+        style=discord.ButtonStyle.blurple,
+        row=1,
+    )
+    async def set_join_message(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(WelcomeMessageModal())
 
     @discord.ui.button(label="Save", style=discord.ButtonStyle.green, row=2)
     async def save(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -131,26 +195,6 @@ class WelcomeView(discord.ui.View):
         await interaction.response.send_message("Cancelled!", ephemeral=True)
         button.disabled = True
         self.stop()
-
-    @discord.ui.button(label="Set Welcome Message", style=discord.ButtonStyle.blurple, row=2)
-    async def set_welcome_message(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(WelcomeMessageModal())
-
-    @discord.ui.button(label="Enable/disable leave/join messages", style=discord.ButtonStyle.blurple, row=2)
-    async def edljm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # noinspection PyTypeChecker
-        bot: Bloo = interaction.client
-        current_state = await bot.fetch("SELECT welcome_enabled FROM welcome_settings WHERE guild_id = $1", interaction.guild.id)
-        if current_state:
-            current_state = current_state[0]["welcome_enabled"]
-        else:
-            current_state = False
-        await bot.execute(
-            "INSERT INTO welcome_settings (guild_id, welcome_enabled) VALUES ($1, $2) ON CONFLICT (guild_id) DO UPDATE SET welcome_enabled = $2",
-            interaction.guild.id,
-            not current_state,
-        )
-
 
 
 class Settings(commands.Cog):
