@@ -29,7 +29,7 @@ class Listeners(commands.Cog):
         await member.guild.get_channel(settings[0]["welcome_channel"]).send(embed=embed)
 
     @commands.Cog.listener()
-    async def on_member_leave(self, member: discord.Member):
+    async def on_member_remove(self, member: discord.Member):
         settings = await self.bot.fetch(
             "SELECT * FROM welcome_settings WHERE guild_id = $1",
             member.guild.id
