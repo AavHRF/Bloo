@@ -11,6 +11,7 @@ class Listeners(commands.Cog):
     async def on_member_join(self, member: discord.Member):
         settings = await self.bot.fetch(
             "SELECT * FROM welcome_settings WHERE guild_id = $1",
+            member.guild.id
         )
         if not settings:
             return
@@ -31,6 +32,7 @@ class Listeners(commands.Cog):
     async def on_member_leave(self, member: discord.Member):
         settings = await self.bot.fetch(
             "SELECT * FROM welcome_settings WHERE guild_id = $1",
+            member.guild.id
         )
         if not settings:
             return
