@@ -155,7 +155,7 @@ class Settings(commands.Cog):
             description="This menu lets you set the welcome message for the server, whether or not embeds are shown "
             "on server join, and the channel to send the welcome message in.\n\nThe welcome message can "
             "contain @mentionables, #channels, and emojis -- however, they must be formatted "
-            "appropriately.\n`- Member: <@id number>`\n`- Role: <@&id number>`\n`- Channel: <#id number>",
+            "appropriately.\n`- Member: <@id number>`\n`- Role: <@&id number>`\n`- Channel: <#id number>`",
             color=discord.Color.blurple(),
         )
         menu = await interaction.followup.send(embed=embed, ephemeral=True)
