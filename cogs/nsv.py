@@ -35,6 +35,11 @@ class NSV(commands.Cog):
             "SELECT * FROM nsv_settings WHERE guild_id = $1",
             ctx.guild.id,
         )
+        welcome_message = (
+            settings[0]["welcome_message"]
+            if settings[0]["welcome_message"]
+            else "Welcome! Roles granted."
+        )
         if not settings:
             await ctx.send("This server has not been set up yet for NSV.")
             return
@@ -100,13 +105,11 @@ class NSV(commands.Cog):
                 await ctx.author.add_roles(
                     verified_role, guest_role, reason="Verified via NSV."
                 )
-                await ctx.author.send("Welcome! Roles granted.")
             else:
                 resident_role = ctx.guild.get_role(settings[0]["resident_role"])
                 await ctx.author.add_roles(
                     verified_role, resident_role, reason="Verified via NSV."
                 )
-                await ctx.author.send("Welcome! Roles granted.")
                 if status == "wa-resident":
                     wa_resident_role = ctx.guild.get_role(
                         settings[0]["wa_resident_role"]
@@ -114,6 +117,7 @@ class NSV(commands.Cog):
                     await ctx.author.add_roles(
                         wa_resident_role, reason="Verified via NSV."
                     )
+            await ctx.author.send(welcome_message)
 
         else:
             verified = ctx.guild.get_role(settings[0]["verified_role"])
@@ -121,7 +125,7 @@ class NSV(commands.Cog):
 
     @commands.guild_only()
     @commands.hybrid_command(with_app_command=True)
-    async def verify(self, ctx: commands.Context, *, nation: str = None):
+    async def verify(self, ctx: commands.Context, *, nation: str):
         """
         Verify your nation
         """
