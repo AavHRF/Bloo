@@ -57,7 +57,7 @@ class WelcomeMessageModal(discord.ui.Modal, title="Set Welcome Message"):
         # noinspection PyTypeChecker
         bot: Bloo = interaction.client
         await bot.execute(
-            "INSERT INTO welcome_settings (guild_id, embed_message) VALUES ($1, $2) ON CONFLICT (guild_id) DO UPDATE SET welcome_message = $2",
+            "INSERT INTO welcome_settings (guild_id, embed_message) VALUES ($1, $2) ON CONFLICT (guild_id) DO UPDATE SET embed_message = $2",
             interaction.guild.id,
             self.message.value,
         )
@@ -161,7 +161,7 @@ class WelcomeView(discord.ui.View):
             interaction.guild.id,
             not current_state,
         )
-        await interaction.followup.send_message(
+        await interaction.followup.send(
             f"Welcome messages are now {'enabled' if not current_state else 'disabled'}"
         )
 
