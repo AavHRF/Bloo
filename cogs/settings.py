@@ -206,7 +206,7 @@ class Settings(commands.Cog):
     @app_commands.default_permissions(manage_guild=True)
     async def settings(self, interaction: discord.Interaction):
         """Configure NSV settings for the server"""
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         embed = discord.Embed(
             title="Settings",
             description="This menu lets you set the roles for the bot to use, along with the region your server is for.",
@@ -219,7 +219,7 @@ class Settings(commands.Cog):
     @app_commands.default_permissions(manage_guild=True)
     async def welcome(self, interaction: discord.Interaction):
         """Configure the welcome message for the server"""
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         embed = discord.Embed(
             title="Welcome Configuration",
             description="This menu lets you set the welcome message for the server, whether or not embeds are shown "
@@ -228,7 +228,7 @@ class Settings(commands.Cog):
             "appropriately.\n`- Member: <@id number>`\n`- Role: <@&id number>`\n`- Channel: <#id number>`",
             color=discord.Color.blurple(),
         )
-        menu = await interaction.followup.send("Have fun!", embed=embed, ephemeral=True)
+        menu = await interaction.followup.send(embed=embed, ephemeral=True)
         await menu.edit(view=WelcomeView(menu))
 
 
