@@ -98,36 +98,59 @@ class SettingsView(discord.ui.View):
         await interaction.response.defer()
 
 
-# class WelcomeView(discord.ui.View):
-#     def __init__(self, m: discord.Message):
-#         self.message = m
-#         super().__init__(timeout=300)
-#
-#     @discord.ui.select(
-#         cls=discord.ui.ChannelSelect, placeholder="Set Welcome Channel", row=0
-#     )
-#     async def wc(self, interaction: discord.Interaction, select: discord.ui.Select):
-#         await interaction.response.defer()
-#
-#     @discord.ui.button(label="Save", style=discord.ButtonStyle.green, row=1)
-#     async def save(self, interaction: discord.Interaction, button: discord.ui.Button):
-#         # noinspection PyTypeChecker
-#         bot: Bloo = interaction.client
-#         # Fail if not all the selects have a value
-#         if not self.wc.values:
-#             await interaction.response.send_message(
-#                 "Please select a channel!", ephemeral=True
-#             )
-#             return
-#         await bot.execute(
-#             "INSERT INTO welcome_settings (guild_id, welcome_channel) VALUES ($1, $2) ON CONFLICT (guild_id) DO UPDATE SET welcome_channel = $2",
-#             interaction.guild.id,
-#             self.wc.values[0].id,
-#         )
-#         await interaction.response.send_message("Settings saved!", ephemeral=True)
-#         for child in self.children:
-#             child.disabled = True
-#         await self.message.edit(view=self)
+class WelcomeView(discord.ui.View):
+    def __init__(self, m: discord.Message):
+        self.message = m
+        super().__init__(timeout=300)
+
+    @discord.ui.select(
+        cls=discord.ui.ChannelSelect, placeholder="Set Welcome Channel", row=0, channel_types=[discord.ChannelType.text]
+    )
+    async def wc(self, interaction: discord.Interaction, select: discord.ui.Select):
+        await interaction.response.defer()
+
+    @discord.ui.button(label="Save", style=discord.ButtonStyle.green, row=2)
+    async def save(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # noinspection PyTypeChecker
+        bot: Bloo = interaction.client
+        await bot.execute(
+            "INSERT INTO welcome_settings (guild_id, welcome_channel) VALUES ($1, $2) ON CONFLICT (guild_id) DO UPDATE SET welcome_channel = $2",
+            interaction.guild.id,
+            self.wc.values[0].id if self.wc.values else 0,
+        )
+        await interaction.response.send_message("Settings saved!", ephemeral=True)
+        for child in self.children:
+            child.disabled = True
+        await self.message.edit(view=self)
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, row=2)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        for child in self.children:
+            child.disabled = True
+        await self.message.edit(view=self)
+        await interaction.response.send_message("Cancelled!", ephemeral=True)
+        button.disabled = True
+        self.stop()
+
+    @discord.ui.button(label="Set Welcome Message", style=discord.ButtonStyle.blurple, row=2)
+    async def set_welcome_message(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(WelcomeMessageModal())
+
+    @discord.ui.button(label="Enable/disable leave/join messages", style=discord.ButtonStyle.blurple, row=2)
+    async def edljm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # noinspection PyTypeChecker
+        bot: Bloo = interaction.client
+        current_state = await bot.fetch("SELECT welcome_enabled FROM welcome_settings WHERE guild_id = $1", interaction.guild.id)
+        if current_state:
+            current_state = current_state[0]["welcome_enabled"]
+        else:
+            current_state = False
+        await bot.execute(
+            "INSERT INTO welcome_settings (guild_id, welcome_enabled) VALUES ($1, $2) ON CONFLICT (guild_id) DO UPDATE SET welcome_enabled = $2",
+            interaction.guild.id,
+            not current_state,
+        )
+
 
 
 class Settings(commands.Cog):
@@ -135,6 +158,7 @@ class Settings(commands.Cog):
         self.bot = bot
 
     @app_commands.command()
+    @app_commands.default_permissions(manage_guild=True)
     async def settings(self, interaction: discord.Interaction):
         """Configure NSV settings for the server"""
         await interaction.response.defer()
@@ -147,6 +171,7 @@ class Settings(commands.Cog):
         await menu.edit(view=SettingsView(menu))
 
     @app_commands.command()
+    @app_commands.default_permissions(manage_guild=True)
     async def welcome(self, interaction: discord.Interaction):
         """Configure the welcome message for the server"""
         await interaction.response.defer()
@@ -159,7 +184,7 @@ class Settings(commands.Cog):
             color=discord.Color.blurple(),
         )
         menu = await interaction.followup.send(embed=embed, ephemeral=True)
-        # await menu.edit(view=WelcomeView(menu))
+        await menu.edit(view=WelcomeView(menu))
 
 
 async def setup(bot: Bloo):

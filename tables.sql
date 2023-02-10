@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS nsv_settings (
     wa_resident_role BIGINT,
     verified_role BIGINT,
     region TEXT,
+    welcome_message TEXT,
     PRIMARY KEY (guild_id)
 );
 
@@ -24,3 +25,11 @@ CREATE TABLE IF NOT EXISTS nation_dump (
     last_update TIMESTAMP NOT NULL,
     PRIMARY KEY (nation)
 );
+
+CREATE TABLE IF NOT EXISTS welcome_settings (
+    guild_id BIGINT,
+    welcome_channel BIGINT,
+    welcome_enabled BOOLEAN,
+    PRIMARY KEY (guild_id)
+);
+)
