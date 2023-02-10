@@ -162,7 +162,8 @@ class WelcomeView(discord.ui.View):
             not current_state,
         )
         await interaction.followup.send(
-            f"Welcome messages are now {'enabled' if not current_state else 'disabled'}"
+            f"Welcome messages are now {'enabled' if not current_state else 'disabled'}",
+            ephemeral=True,
         )
 
     @discord.ui.button(
@@ -227,7 +228,7 @@ class Settings(commands.Cog):
             "appropriately.\n`- Member: <@id number>`\n`- Role: <@&id number>`\n`- Channel: <#id number>`",
             color=discord.Color.blurple(),
         )
-        menu = await interaction.followup.send(embed=embed, ephemeral=True)
+        menu = await interaction.followup.send("Have fun!", embed=embed, ephemeral=True)
         await menu.edit(view=WelcomeView(menu))
 
 
