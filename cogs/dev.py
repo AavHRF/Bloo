@@ -14,7 +14,7 @@ class developer(commands.Cog):
 
     @commands.command(name="reload", description="Reload a cog.")
     @commands.is_owner()
-    async def reload(self, ctx: commands.Context, cog: str):
+    async def reload(self, ctx: commands.Context, *, cog: str):
         if "*" in cog:
             for filename in os.listdir("cogs"):
                 if os.path.isfile(os.path.join("cogs", filename)):
@@ -22,7 +22,8 @@ class developer(commands.Cog):
                         await self.bot.reload_extension(f"cogs.{filename[:-3]}")
             await ctx.send("Done!", ephemeral=True)
         else:
-            await self.bot.reload_extension(f"cogs.{cog.lower().replace(' ', '_')}")
+            for c in cog.split(","):
+                await self.bot.reload_extension(f"cogs.{c.lower().replace(' ', '_')}")
             await ctx.send("Done!", ephemeral=True)
 
     @commands.command(name="load", description="Load a cog.")
@@ -40,7 +41,7 @@ class developer(commands.Cog):
     @commands.command(name="say", description="Send a message to a channel.")
     @commands.is_owner()
     async def say(
-            self, ctx: commands.Context, channel: discord.TextChannel, *, message: str
+        self, ctx: commands.Context, channel: discord.TextChannel, *, message: str
     ):
         await channel.send(message)
         await ctx.send("Done!", ephemeral=True)
@@ -64,7 +65,7 @@ class developer(commands.Cog):
         now_ts = datetime.datetime.now()
         if skip_dump is None:
             async with self.bot.session.get(
-                    "https://www.nationstates.net/pages/nations.xml.gz"
+                "https://www.nationstates.net/pages/nations.xml.gz"
             ) as resp:
                 with open("nations.xml.gz", "wb") as f:
                     f.write(await resp.read())
@@ -75,7 +76,11 @@ class developer(commands.Cog):
                 name = nation.find("NAME").text.lower().replace(" ", "_")
                 region = nation.find("REGION").text.lower().replace(" ", "_")
                 unstatus = nation.find("UNSTATUS").text
-                endorsements = nation.find("ENDORSEMENTS").text if nation.find("ENDORSEMENTS") is not None else 0
+                endorsements = (
+                    nation.find("ENDORSEMENTS").text
+                    if nation.find("ENDORSEMENTS") is not None
+                    else 0
+                )
                 await self.bot.execute(
                     "INSERT INTO nation_dump (nation, region, unstatus, endorsements, last_update) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (nation) DO UPDATE SET region = $2, unstatus = $3, endorsements = $4, last_update = $5",
                     name,
