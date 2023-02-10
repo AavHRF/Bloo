@@ -45,3 +45,7 @@ class Listeners(commands.Cog):
         )
         embed.set_footer(text=f"ID: {member.id}")
         await member.guild.get_channel(settings[0]["welcome_channel"]).send(embed=embed)
+
+
+async def setup(bot: Bloo):
+    await bot.add_cog(Listeners(bot))
