@@ -89,7 +89,7 @@ class NSV(commands.Cog):
             if settings[0]["region"] != region:
                 status = "guest"
             else:
-                if wa == "WA Member":
+                if "WA" in wa:
                     status = "wa-resident"
                 else:
                     status = "resident"
