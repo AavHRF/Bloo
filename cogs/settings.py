@@ -24,6 +24,26 @@ class RegionModal(discord.ui.Modal, title="Set Region"):
         )
 
 
+class WelcomeMessageModal(discord.ui.Modal, title="Set Welcome Message"):
+    message = discord.ui.TextInput(
+        label="Welcome Message",
+        placeholder="Welcome to The North Pacific!",
+        min_length=1,
+        max_length=2000,
+        style=discord.TextStyle.long,
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.send_message("Submitted!", ephemeral=True)
+        # noinspection PyTypeChecker
+        bot: Bloo = interaction.client
+        await bot.execute(
+            "INSERT INTO nsv_settings (guild_id, welcome_message) VALUES ($1, $2) ON CONFLICT (guild_id) DO UPDATE SET welcome_message = $2",
+            interaction.guild.id,
+            self.message.value,
+        )
+
+
 class SettingsView(discord.ui.View):
     def __init__(self, m: discord.Message):
         super().__init__(timeout=300)
@@ -79,12 +99,13 @@ class SettingsView(discord.ui.View):
 
 
 # class WelcomeView(discord.ui.View):
-#
 #     def __init__(self, m: discord.Message):
 #         self.message = m
 #         super().__init__(timeout=300)
 #
-#     @discord.ui.select(cls=discord.ui.ChannelSelect, placeholder="Welcome Channel", row=0)
+#     @discord.ui.select(
+#         cls=discord.ui.ChannelSelect, placeholder="Set Welcome Channel", row=0
+#     )
 #     async def wc(self, interaction: discord.Interaction, select: discord.ui.Select):
 #         await interaction.response.defer()
 #
@@ -108,6 +129,7 @@ class SettingsView(discord.ui.View):
 #             child.disabled = True
 #         await self.message.edit(view=self)
 
+
 class Settings(commands.Cog):
     def __init__(self, bot: Bloo):
         self.bot = bot
@@ -124,18 +146,20 @@ class Settings(commands.Cog):
         menu = await interaction.followup.send(embed=embed, ephemeral=True)
         await menu.edit(view=SettingsView(menu))
 
-    # @app_commands.command()
-    # async def welcome(self, interaction: discord.Interaction):
-    #     """Configure the welcome message for the server"""
-    #     await interaction.response.defer()
-    #     embed = discord.Embed(
-    #         title="Welcome Configuration",
-    #         description="This menu lets you set the welcome message for the server, whether or not embeds are shown "
-    #                     "on server join, and the channel to send the welcome message in.",
-    #         color=discord.Color.blurple(),
-    #     )
-    #     menu = await interaction.followup.send(embed=embed, ephemeral=True)
-    #     await menu.edit(view=WelcomeView(menu))
+    @app_commands.command()
+    async def welcome(self, interaction: discord.Interaction):
+        """Configure the welcome message for the server"""
+        await interaction.response.defer()
+        embed = discord.Embed(
+            title="Welcome Configuration",
+            description="This menu lets you set the welcome message for the server, whether or not embeds are shown "
+            "on server join, and the channel to send the welcome message in.\n\nThe welcome message can "
+            "contain @mentionables, #channels, and emojis -- however, they must be formatted "
+            "appropriately.\n`- Member: <@id number>`\n`- Role: <@&id number>`\n`- Channel: <#id number>",
+            color=discord.Color.blurple(),
+        )
+        menu = await interaction.followup.send(embed=embed, ephemeral=True)
+        # await menu.edit(view=WelcomeView(menu))
 
 
 async def setup(bot: Bloo):
