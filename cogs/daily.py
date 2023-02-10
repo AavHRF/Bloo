@@ -16,6 +16,9 @@ class DailyUpdate(commands.Cog):
     def cog_unload(self):
         self.daily_update.cancel()
 
+    def parse(self, f):
+        return ElementTree.parse(f)
+
     # noinspection DuplicatedCode
     @tasks.loop(time=datetime.time(8, 0, 0, 0))
     async def daily_update(self):
