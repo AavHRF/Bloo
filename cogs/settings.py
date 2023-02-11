@@ -167,6 +167,32 @@ class WelcomeView(discord.ui.View):
         )
 
     @discord.ui.button(
+        label="Enable/disable ping on join",
+        style=discord.ButtonStyle.blurple,
+        row=1,
+    )
+    async def edpoj(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # noinspection PyTypeChecker
+        bot: Bloo = interaction.client
+        await interaction.response.defer()
+        current_state = await bot.fetch(
+            "SELECT ping_on_join FROM welcome_settings WHERE guild_id = $1",
+            interaction.guild.id,
+        )
+        if current_state:
+            current_state = current_state[0]["ping_on_join"]
+        else:
+            current_state = False
+        await bot.execute(
+            "INSERT INTO welcome_settings (guild_id, ping_on_join) VALUES ($1, $2) ON CONFLICT (guild_id) DO UPDATE SET ping_on_join = $2",
+            interaction.guild.id,
+            not current_state,
+        )
+        await interaction.followup.send(
+            f"Ping on join is now {'enabled' if not current_state else 'disabled'}",
+            ephemeral=True,
+        )
+    @discord.ui.button(
         label="Set join message",
         style=discord.ButtonStyle.blurple,
         row=1,

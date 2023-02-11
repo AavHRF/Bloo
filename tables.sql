@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS nsv_table (
     discord_id BIGINT NOT NULL,
     guild_id BIGINT NOT NULL,
     nation VARCHAR(50) NOT NULL,
-    status VARCHAR(10) NOT NULL,
+    status VARCHAR(15) NOT NULL,
     UNIQUE (discord_id, guild_id)
 );
 
@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS welcome_settings (
     guild_id BIGINT,
     welcome_channel BIGINT,
     welcome_enabled BOOLEAN,
+    ping_on_join BOOLEAN,
     embed_message VARCHAR(500),
     PRIMARY KEY (guild_id)
 );
