@@ -10,8 +10,7 @@ class Listeners(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         settings = await self.bot.fetch(
-            "SELECT * FROM welcome_settings WHERE guild_id = $1",
-            member.guild.id
+            "SELECT * FROM welcome_settings WHERE guild_id = $1", member.guild.id
         )
         if not settings:
             return
@@ -26,13 +25,19 @@ class Listeners(commands.Cog):
             value=member.guild.member_count,
         )
         embed.set_footer(text=f"ID: {member.id}")
-        await member.guild.get_channel(settings[0]["welcome_channel"]).send(embed=embed)
+        if not settings[0]["ping_on_join"]:
+            await member.guild.get_channel(settings[0]["welcome_channel"]).send(
+                embed=embed
+            )
+        else:
+            await member.guild.get_channel(settings[0]["welcome_channel"]).send(
+                f"{member.mention}", embed=embed
+            )
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         settings = await self.bot.fetch(
-            "SELECT * FROM welcome_settings WHERE guild_id = $1",
-            member.guild.id
+            "SELECT * FROM welcome_settings WHERE guild_id = $1", member.guild.id
         )
         if not settings:
             return

@@ -192,12 +192,15 @@ class WelcomeView(discord.ui.View):
             f"Ping on join is now {'enabled' if not current_state else 'disabled'}",
             ephemeral=True,
         )
+
     @discord.ui.button(
         label="Set join message",
         style=discord.ButtonStyle.blurple,
         row=1,
     )
-    async def set_join_message(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def set_join_message(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         await interaction.response.send_modal(WelcomeMessageModal())
 
     @discord.ui.button(label="Save", style=discord.ButtonStyle.green, row=2)
