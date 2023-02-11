@@ -57,7 +57,7 @@ class NSV(commands.Cog):
             msg: discord.Message = await self.bot.wait_for(
                 "message",
                 check=lambda m: m.author == ctx.author
-                and m.channel == ctx.author.dm_channel,
+                                and m.channel == ctx.author.dm_channel,
                 timeout=60,
             )
         except asyncio.TimeoutError:
@@ -155,7 +155,7 @@ class NSV(commands.Cog):
                 msg: discord.Message = await self.bot.wait_for(
                     "message",
                     check=lambda m: m.author == ctx.author
-                    and m.channel == ctx.author.dm_channel,
+                                    and m.channel == ctx.author.dm_channel,
                     timeout=60,
                 )
             except asyncio.TimeoutError:
@@ -175,43 +175,6 @@ class NSV(commands.Cog):
             ctx.guild.id,
         )
         await ctx.send("Done.")
-
-    @commands.guild_only()
-    @commands.hybrid_command(with_app_command=True)
-    async def info(self, ctx: commands.Context, member: discord.Member = None):
-        """
-        Gets information about a member
-        """
-        if not member:
-            member = ctx.author
-        nation = await self.bot.fetch(
-            "SELECT nation FROM nsv_table WHERE discord_id = $1 AND guild_id = $2",
-            member.id,
-            ctx.guild.id,
-        )
-        if not nation:
-            nation = "None set"
-        else:
-            nation = nation[0]["nation"]
-
-        embed = discord.Embed(
-            title=f"Information for {member.display_name}",
-            color=discord.Color.random(),
-        )
-        embed.add_field(
-            name="Nation",
-            value=nation.replace("_", " ").title(),
-        )
-        embed.add_field(
-            name="ID",
-            value=member.id,
-        )
-        embed.add_field(
-            name="Joined server",
-            value=f"<t:{member.joined_at.timestamp().__trunc__()}>",
-        )
-        embed.set_thumbnail(url=member.display_avatar.url)
-        await ctx.send(embed=embed)
 
 
 async def setup(bot: Bloo):
