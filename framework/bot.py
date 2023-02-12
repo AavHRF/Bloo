@@ -11,7 +11,7 @@ from aiolimiter import AsyncLimiter
 class Bloo(commands.Bot):
     def __init__(self):
         super().__init__(
-            command_prefix=">",
+            command_prefix="b>",
             intents=discord.Intents.all(),
             help_command=None,
         )
