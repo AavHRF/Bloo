@@ -132,7 +132,7 @@ class Utility(commands.Cog):
                 value=f"<t:{int(tree.find('FIRSTLOGIN').text)}>"
             )
             embed.set_footer(
-                text=f"Last logged in <t:{tree.find('LASTLOGIN').text}>"
+                text=f"Last activity was {tree.find('LASTACTIVITY').text}"
             )
             await interaction.followup.send(embed=embed, ephemeral=True)
 
