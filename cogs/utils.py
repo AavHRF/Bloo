@@ -6,11 +6,66 @@ from typing import Literal
 from xml.etree import ElementTree
 
 
+class ReasonModal(discord.ui.Modal, title="Reason for ban"):
+
+    def __init__(self, nation: str):
+        super().__init__()
+        self.nation = nation
+
+    reason = discord.ui.TextInput(
+        label="Reason",
+        placeholder="Why is this nation banned?",
+        min_length=1,
+        max_length=1000,
+    )
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        # noinspection PyTypeChecker
+        bot: Bloo = interaction.client
+        await bot.execute(
+            "INSERT INTO nsv_ban_table (nation, reason, guild_id) VALUES ($1, $2, $3)",
+            self.nation,
+            self.reason.value,
+            interaction.guild.id,
+        )
+        await interaction.response.send_message("Nation banned!", ephemeral=True)
+
+
 class ModView(discord.ui.View):
 
-    def __init__(self, bot: Bloo, nation: str, member: discord.Member):
+    def __init__(self, bot: Bloo, nation: str, member: discord.Member, banned: bool = False):
         super().__init__()
-        self.value = None
+        self.bot = bot
+        self.nation = nation
+        self.member = member
+        self.banned = banned
+        self.add_item(
+            discord.ui.Button(
+                label="Show on nationstates.net",
+                style=discord.ButtonStyle.link,
+                url=f"https://www.nationstates.net/nation={self.nation}",
+            )
+        )
+
+    @discord.ui.button(label="Unban", style=discord.ButtonStyle.green, row=0)
+    async def unban(self, button: discord.ui.Button, interaction: discord.Interaction):
+        if not self.banned:
+            return await interaction.response.send_message("This nation is not banned!", ephemeral=True)
+        else:
+            await self.bot.execute(
+                "DELETE FROM nsv_ban_table WHERE nation = $1 AND guild_id = $2",
+                self.nation,
+                interaction.guild.id,
+            )
+            await interaction.response.send_message("Nation unbanned!", ephemeral=True)
+            self.banned = False
+
+    @discord.ui.button(label="Ban", style=discord.ButtonStyle.red, row=0)
+    async def ban(self, button: discord.ui.Button, interaction: discord.Interaction):
+        if self.banned:
+            return await interaction.response.send_message("This nation is already banned!", ephemeral=True)
+        else:
+            await interaction.response.send_modal(ReasonModal(self.nation))
 
 
 class Utility(commands.Cog):
@@ -152,7 +207,13 @@ class Utility(commands.Cog):
                         reason = modcheck[0]["reason"]
                         embed.description += "```ansi\n\u001b[1;31m**BANNED**\u001b[0m"
                         embed.description += f"\n\u001b[1;31mReason:\u001b[0m\n{reason}```"
-            await interaction.followup.send(embed=embed, ephemeral=True)
+                    await interaction.followup.send(
+                        embed=embed,
+                        ephemeral=True,
+                        view=ModView(self.bot, name.lower().replace(' ', '_'), interaction.user, bool(modcheck))
+                    )
+            else:
+                await interaction.followup.send(embed=embed, ephemeral=True)
 
         else:
             embed = discord.Embed(
