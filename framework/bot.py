@@ -38,6 +38,9 @@ class Bloo(commands.Bot):
                     await self.load_extension(f"cogs.{cog[:-3]}")
             except discord.ext.commands.errors.NoEntryPointError:
                 pass
+            except discord.ext.commands.errors.ExtensionFailed as e:
+                print(e)
+                pass
 
     async def fetch(self, query: str, *args) -> List[asyncpg.Record]:
         async with self.pool.acquire() as con:
