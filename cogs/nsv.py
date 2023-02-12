@@ -57,7 +57,7 @@ class NSV(commands.Cog):
             msg: discord.Message = await self.bot.wait_for(
                 "message",
                 check=lambda m: m.author == ctx.author
-                                and m.channel == ctx.author.dm_channel,
+                and m.channel == ctx.author.dm_channel,
                 timeout=60,
             )
         except asyncio.TimeoutError:
@@ -79,17 +79,13 @@ class NSV(commands.Cog):
 
         for ban in guildbans:
             if nation == ban["nation"]:
-                await ctx.author.ban(
-                    reason=ban["reason"]
-                )
+                await ctx.author.ban(reason=ban["reason"])
                 embed = discord.Embed(
                     title="Member joined with banned nation.",
                     description=f"User {ctx.author.mention} ({ctx.author.id}) joined with a nation ({nation.replace('_', '_').title()})that is banned from this server.",
                     color=discord.Color.red(),
                 )
-                await ctx.guild.get_channel(
-                    welcset[0]["welcome_channel"]
-                ).send(
+                await ctx.guild.get_channel(welcset[0]["welcome_channel"]).send(
                     embed=embed
                 )
                 return
@@ -180,7 +176,7 @@ class NSV(commands.Cog):
                 msg: discord.Message = await self.bot.wait_for(
                     "message",
                     check=lambda m: m.author == ctx.author
-                                    and m.channel == ctx.author.dm_channel,
+                    and m.channel == ctx.author.dm_channel,
                     timeout=60,
                 )
             except asyncio.TimeoutError:

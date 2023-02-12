@@ -27,9 +27,7 @@ class Listeners(commands.Cog):
                 for nation in owned:
                     for ban in guildbans:
                         if nation["nation"] == ban["nation"]:
-                            await member.guild.ban(
-                                member, reason=ban["reason"]
-                            )
+                            await member.guild.ban(member, reason=ban["reason"])
                             embed = discord.Embed(
                                 title="Member joined with banned nation.",
                                 description=f"User {member.mention} ({member.id}) joined with a nation ({nation['nation']})that is banned from this server.",
@@ -37,9 +35,7 @@ class Listeners(commands.Cog):
                             )
                             await member.guild.get_channel(
                                 settings[0]["welcome_channel"]
-                            ).send(
-                                embed=embed
-                            )
+                            ).send(embed=embed)
                             return
 
         if not settings:

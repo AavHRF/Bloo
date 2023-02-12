@@ -6,18 +6,19 @@ from typing import Union
 
 
 class Moderator(commands.Cog):
-
     def __init__(self, bot: Bloo):
         self.bot = bot
 
-    @app_commands.command(name="ban_nation", description="Ban a member by name, ID, or nation")
+    @app_commands.command(
+        name="ban_nation", description="Ban a member by name, ID, or nation"
+    )
     @app_commands.default_permissions(ban_members=True)
     async def ban_nation(
-            self,
-            interaction: discord.Interaction,
-            nation: str,
-            reason: str,
-            delete_message_days: int = 0,
+        self,
+        interaction: discord.Interaction,
+        nation: str,
+        reason: str,
+        delete_message_days: int = 0,
     ):
         await interaction.response.defer(ephemeral=True)
         record = await self.bot.fetch(
@@ -33,10 +34,12 @@ class Moderator(commands.Cog):
             )
             await interaction.followup.send(
                 "Nation banned. On entry/verification, any user with that nation will be removed from the server.",
-                ephemeral=True
+                ephemeral=True,
             )
         await interaction.guild.ban(
-            record[0]["discord_id"], reason=reason, delete_message_days=delete_message_days
+            record[0]["discord_id"],
+            reason=reason,
+            delete_message_days=delete_message_days,
         )
         await interaction.followup.send("Banned!", ephemeral=True)
 
