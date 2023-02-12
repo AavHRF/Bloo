@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from framework.bot import Bloo
-from typing import Literal
+from typing import Literal, Optional
 from xml.etree import ElementTree
 
 
@@ -78,11 +78,15 @@ class Utility(commands.Cog):
             self,
             interaction: discord.Interaction,
             channel: discord.TextChannel,
-            *,
             message: str,
+            edit: Optional[int] = None,
     ):
         await interaction.response.defer(ephemeral=True)
-        await channel.send(message)
+        if not edit:
+            await channel.send(message)
+        else:
+            msg = await channel.fetch_message(edit)
+            await msg.edit(content=message)
         await interaction.followup.send("Message sent!", ephemeral=True)
 
     @commands.guild_only()
