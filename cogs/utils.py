@@ -167,7 +167,21 @@ class Utility(commands.Cog):
                 payload={"region": name.lower().replace(" ", "_")},
                 mode="GET",
             )
-        if response.status != 200:
+        if response.status == 404:
+            if which == "nation":
+                await interaction.followup.send(
+                    f"Could not find that nation. Try [checking the boneyard.]("
+                    f"https://www.nationstates.net/page=boneyard?nation={name.lower().replace(' ', '_')})",
+                    ephemeral=True
+                )
+                return
+            else:
+                await interaction.followup.send(
+                    f"That region does not appear to exist.",
+                    ephemeral=True
+                )
+                return
+        elif response.status != 200:
             await interaction.followup.send(
                 "NationStates experienced an error.", ephemeral=True
             )
