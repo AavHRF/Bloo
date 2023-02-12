@@ -68,6 +68,31 @@ class NSV(commands.Cog):
         if not await self.auth_call(nation, msg.content):
             await ctx.author.send("Invalid code.")
             return
+        guildbans = await self.bot.fetch(
+            "SELECT * FROM nsv_ban_table WHERE guild_id = $1", ctx.guild.id
+        )
+        welcset = await self.bot.fetch(
+            "SELECT * FROM welcome_settings WHERE guild_id = $1", ctx.guild.id
+        )
+        if not guildbans:
+            pass
+
+        for ban in guildbans:
+            if nation == ban["nation"]:
+                await ctx.author.ban(
+                    reason=ban["reason"]
+                )
+                embed = discord.Embed(
+                    title="Member joined with banned nation.",
+                    description=f"User {ctx.author.mention} ({ctx.author.id}) joined with a nation ({nation.replace('_', '_').title()})that is banned from this server.",
+                    color=discord.Color.red(),
+                )
+                await ctx.guild.get_channel(
+                    welcset[0]["welcome_channel"]
+                ).send(
+                    embed=embed
+                )
+                return
 
         # Now that we have verified the user, we want to check residency / WA status
         resp: aiohttp.ClientResponse = await self.bot.ns_request(

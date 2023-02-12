@@ -12,6 +12,36 @@ class Listeners(commands.Cog):
         settings = await self.bot.fetch(
             "SELECT * FROM welcome_settings WHERE guild_id = $1", member.guild.id
         )
+        guildbans = await self.bot.fetch(
+            "SELECT * FROM nsv_ban_table WHERE guild_id = $1", member.guild.id
+        )
+        if not guildbans:
+            pass
+        else:
+            owned = await self.bot.fetch(
+                "SELECT * FROM nsv_table WHERE discord_id = $1", member.id
+            )
+            if not owned:
+                pass
+            else:
+                for nation in owned:
+                    for ban in guildbans:
+                        if nation["nation"] == ban["nation"]:
+                            await member.guild.ban(
+                                member, reason=ban["reason"]
+                            )
+                            embed = discord.Embed(
+                                title="Member joined with banned nation.",
+                                description=f"User {member.mention} ({member.id}) joined with a nation ({nation['nation']})that is banned from this server.",
+                                color=discord.Color.red(),
+                            )
+                            await member.guild.get_channel(
+                                settings[0]["welcome_channel"]
+                            ).send(
+                                embed=embed
+                            )
+                            return
+
         if not settings:
             return
         embed = discord.Embed(
