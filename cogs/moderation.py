@@ -41,7 +41,6 @@ class Moderator(commands.Cog):
                 reason=reason,
                 delete_message_days=delete_message_days,
             )
-        await interaction.followup.send("Banned!", ephemeral=True)
 
 
 async def setup(bot: Bloo):
