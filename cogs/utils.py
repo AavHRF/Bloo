@@ -48,7 +48,7 @@ class ModView(discord.ui.View):
         )
 
     @discord.ui.button(label="Unban", style=discord.ButtonStyle.green, row=0)
-    async def unban(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def unban(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not self.banned:
             return await interaction.response.send_message("This nation is not banned!", ephemeral=True)
         else:
@@ -61,7 +61,7 @@ class ModView(discord.ui.View):
             self.banned = False
 
     @discord.ui.button(label="Ban", style=discord.ButtonStyle.red, row=0)
-    async def ban(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def ban(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.banned:
             return await interaction.response.send_message("This nation is already banned!", ephemeral=True)
         else:
