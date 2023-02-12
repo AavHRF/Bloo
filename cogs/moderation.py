@@ -15,7 +15,7 @@ class Moderator(commands.Cog):
     async def ban(
         self,
         interaction: discord.Interaction,
-        member: Union[discord.Member, str],
+        member: discord.Member | str,
         reason: str,
         delete_message_days: int = 0,
     ):
