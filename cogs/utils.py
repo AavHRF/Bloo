@@ -212,6 +212,8 @@ class Utility(commands.Cog):
                         ephemeral=True,
                         view=ModView(self.bot, name.lower().replace(' ', '_'), interaction.user, bool(modcheck))
                     )
+                else:
+                    await interaction.followup.send(embed=embed, ephemeral=True)
             else:
                 await interaction.followup.send(embed=embed, ephemeral=True)
 
@@ -232,6 +234,8 @@ class Utility(commands.Cog):
             embed.set_footer(
                 text=f"Last activity was {tree.find('LASTACTIVITY').text}"
             )
+            embed.set_thumbnail(url=tree.find("FLAG").text)
+            embed.set_image(url=f"https://nationstates.net{tree.find('BANNERURL').text}")
             await interaction.followup.send(embed=embed, ephemeral=True)
 
 
