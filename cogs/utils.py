@@ -150,7 +150,7 @@ class Utility(commands.Cog):
                     )
                     if modcheck:
                         reason = modcheck[0]["reason"]
-                        embed.description += "```ascii\n\u001b[14;30m**BANNED**\u001b[0m"
+                        embed.description += "```ansi\n\u001b[14;30m**BANNED**\u001b[0m"
                         embed.description += f"\n\u001b[14;30mReason:\u001b[0m\n{reason}```"
             await interaction.followup.send(embed=embed, ephemeral=True)
 
