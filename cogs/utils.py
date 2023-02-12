@@ -221,18 +221,32 @@ class Utility(commands.Cog):
             embed = discord.Embed(
                 title=tree.find("NAME").text,
                 url=f"https://www.nationstates.net/region={name.lower().replace(' ', '_')}",
-                description=f"*{tree.find('MOTTO').text}*"
             )
             embed.add_field(
-                name="Delegates",
-                value=tree.find("DELEGATES").text
+                name="Population",
+                value=tree.find("NUMNATIONS").text
+            )
+            f = tree.find("FOUNDER").text
+            embed.add_field(
+                name="Founder",
+                value=f if f != "0" else "None"
+            )
+            w = tree.find("DELEGATE").text
+            embed.add_field(
+                name="WA Delegate",
+                value=w if w != "0" else "None"
             )
             embed.add_field(
-                name="Founded",
-                value=f"<t:{int(tree.find('CREATED').text)}>"
+                name="Founder Authority",
+                value="Executive" if "X" in tree.find("FOUNDERAUTH").text else "Non-Executive"
             )
-            embed.set_footer(
-                text=f"Last activity was {tree.find('LASTACTIVITY').text}"
+            embed.add_field(
+                name="Delegate Authority",
+                value="Executive" if "X" in tree.find("DELEGATEAUTH").text else "Non-Executive"
+            )
+            embed.add_field(
+                name="Delegate Votes",
+                value=tree.find("DELEGATEVOTES").text
             )
             embed.set_thumbnail(url=tree.find("FLAG").text)
             embed.set_image(url=f"https://nationstates.net{tree.find('BANNERURL').text}")
