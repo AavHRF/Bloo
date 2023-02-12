@@ -10,7 +10,7 @@ class Moderator(commands.Cog):
     def __init__(self, bot: Bloo):
         self.bot = bot
 
-    @app_commands.command(name="ban", description="Ban a member by name, ID, or nation")
+    @app_commands.command(name="ban_nation", description="Ban a member by name, ID, or nation")
     @app_commands.default_permissions(ban_members=True)
     async def ban_nation(
             self,
