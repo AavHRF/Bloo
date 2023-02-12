@@ -34,3 +34,10 @@ CREATE TABLE IF NOT EXISTS welcome_settings (
     embed_message VARCHAR(500),
     PRIMARY KEY (guild_id)
 );
+
+CREATE TABLE IF NOT EXISTS nsv_ban_table(
+    guild_id BIGINT NOT NULL,
+    nation VARCHAR(50) NOT NULL,
+    reason VARCHAR(1000) NOT NULL,
+    UNIQUE (nation, guild_id)
+);
