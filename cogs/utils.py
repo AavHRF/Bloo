@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from framework.bot import Bloo
+from typing import Literal
+from xml.etree import ElementTree
 
 
 class Utility(commands.Cog):
@@ -11,11 +13,11 @@ class Utility(commands.Cog):
     @app_commands.command(name="post", description="Post a message to a channel")
     @app_commands.default_permissions(manage_messages=True)
     async def post(
-        self,
-        interaction: discord.Interaction,
-        channel: discord.TextChannel,
-        *,
-        message: str
+            self,
+            interaction: discord.Interaction,
+            channel: discord.TextChannel,
+            *,
+            message: str,
     ):
         await interaction.response.defer(ephemeral=True)
         await channel.send(message)
@@ -74,7 +76,54 @@ class Utility(commands.Cog):
             if member.id not in verified:
                 await member.kick(reason="Unverified member purge")
                 tally += 1
-        await interaction.followup.send(f"Purge complete! Purged {tally} unverified members.", ephemeral=True)
+        await interaction.followup.send(
+            f"Purge complete! Purged {tally} unverified members.", ephemeral=True
+        )
+
+    @app_commands.command(
+        name="lookup", description="Looks up a nation or region on nationstates.net."
+    )
+    @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.guild_id, i.user.id))
+    async def lookup(
+            self,
+            interaction: discord.Interaction,
+            which: Literal["nation", "region"],
+            name: str,
+            show: Literal["me", "channel"],
+    ):
+        if show == "me":
+            await interaction.response.defer(ephemeral=True)
+        else:
+            await interaction.response.defer()
+        if which == "nation":
+            response = await self.bot.ns_request(
+                payload={"nation": name.lower().replace(" ", "_")},
+                mode="GET",
+            )
+        else:
+            response = await self.bot.ns_request(
+                payload={"region": name.lower().replace(" ", "_")},
+                mode="GET",
+            )
+        if response.status != 200:
+            await interaction.followup.send(
+                "NationStates experienced an error.", ephemeral=True
+            )
+            return
+        tree = ElementTree.fromstring(await response.text())
+        if which == "nation":
+            embed = discord.Embed(
+                title=tree.find("FULLNAME").text,
+                url=f"https://www.nationstates.net/nation={name.lower().replace(' ', '_')}",
+                description=f"*{tree.find('MOTTO').text}*"
+            )
+            if not tree.find("FLAG").text.endswith(".svg"):
+                embed.set_thumbnail(url=tree.find("FLAG").text)
+            embed.add_field(
+                name="Region",
+                value=f"[{tree.find('REGION').text}](https://nationstates.net/region={tree.find('REGION').text.lower().replace(' ', '_')})"
+            )
+            await interaction.followup.send(embed=embed, ephemeral=True)
 
 
 async def setup(bot: Bloo):
