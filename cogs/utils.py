@@ -123,6 +123,17 @@ class Utility(commands.Cog):
                 name="Region",
                 value=f"[{tree.find('REGION').text}](https://nationstates.net/region={tree.find('REGION').text.lower().replace(' ', '_')})"
             )
+            embed.add_field(
+                name="World Assembly",
+                value=tree.find("UNSTATUS").text
+            )
+            embed.add_field(
+                name="Founded",
+                value=f"<t:{int(tree.find('FIRSTLOGIN').text)}>"
+            )
+            embed.set_footer(
+                text=f"Last logged in <t:{tree.find('LASTLOGIN').text}>"
+            )
             await interaction.followup.send(embed=embed, ephemeral=True)
 
 
