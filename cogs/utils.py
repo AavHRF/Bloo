@@ -79,13 +79,13 @@ class Utility(commands.Cog):
             interaction: discord.Interaction,
             channel: discord.TextChannel,
             message: str,
-            edit: Optional[int] = None,
+            edit: Optional[str] = None,
     ):
         await interaction.response.defer(ephemeral=True)
         if not edit:
             await channel.send(message)
         else:
-            msg = await channel.fetch_message(edit)
+            msg = await channel.fetch_message(int(edit))
             await msg.edit(content=message)
         await interaction.followup.send("Message sent!", ephemeral=True)
 
