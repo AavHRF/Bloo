@@ -243,12 +243,12 @@ class Utility(commands.Cog):
             f = tree.find("FOUNDER").text
             embed.add_field(
                 name="Founder",
-                value=f if f != "0" else "None"
+                value=f"[{f.title().replace('_', ' ')}](https://nationstates.net/nation={f})" if f != "0" else "None"
             )
             w = tree.find("DELEGATE").text
             embed.add_field(
                 name="WA Delegate",
-                value=w if w != "0" else "None"
+                value=f"[{w.title().replace('_', ' ')}](https://nationstates.net/nation={w})" if w != "0" else "None"
             )
             embed.add_field(
                 name="Founder Authority",
