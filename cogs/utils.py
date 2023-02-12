@@ -6,6 +6,13 @@ from typing import Literal
 from xml.etree import ElementTree
 
 
+class ModView(discord.ui.View):
+
+    def __init__(self, bot: Bloo, nation: str, member: discord.Member):
+        super().__init__()
+        self.value = None
+
+
 class Utility(commands.Cog):
     def __init__(self, bot: Bloo):
         self.bot = bot
@@ -130,6 +137,36 @@ class Utility(commands.Cog):
             embed.add_field(
                 name="Founded",
                 value=f"<t:{int(tree.find('FIRSTLOGIN').text)}>"
+            )
+            embed.set_footer(
+                text=f"Last activity was {tree.find('LASTACTIVITY').text}"
+            )
+            if interaction.user.guild_permissions.ban_members:
+                if show == "me":
+                    modcheck = await self.bot.fetch(
+                        "SELECT * FROM nsv_ban_table WHERE nation = $1 AND guild_id = $2",
+                        name.lower().replace(' ', '_'),
+                        interaction.guild.id,
+                    )
+                    if modcheck:
+                        reason = modcheck[0]["reason"]
+                        embed.description += "```ascii\n\u001b[14;30m\*\*BANNED\*\*\u001b[0m"
+                        embed.description += f"\n\u001b[14;30mReason:\u001b[0m\n{reason}```"
+            await interaction.followup.send(embed=embed, ephemeral=True)
+
+        else:
+            embed = discord.Embed(
+                title=tree.find("NAME").text,
+                url=f"https://www.nationstates.net/region={name.lower().replace(' ', '_')}",
+                description=f"*{tree.find('MOTTO').text}*"
+            )
+            embed.add_field(
+                name="Delegates",
+                value=tree.find("DELEGATES").text
+            )
+            embed.add_field(
+                name="Founded",
+                value=f"<t:{int(tree.find('CREATED').text)}>"
             )
             embed.set_footer(
                 text=f"Last activity was {tree.find('LASTACTIVITY').text}"
