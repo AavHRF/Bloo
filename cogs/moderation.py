@@ -15,7 +15,7 @@ class Moderator(commands.Cog):
     async def ban(
         self,
         interaction: discord.Interaction,
-        member: Union[discord.Member, discord.User, str],
+        member: Union[discord.Member, str],
         reason: str,
         delete_message_days: int = 0,
     ):
@@ -45,3 +45,7 @@ class Moderator(commands.Cog):
                 member, reason=reason, delete_message_days=delete_message_days
             )
             await interaction.followup.send("Banned!", ephemeral=True)
+
+
+async def setup(bot: Bloo):
+    await bot.add_cog(Moderator(bot))
