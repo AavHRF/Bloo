@@ -117,7 +117,7 @@ class SettingsView(discord.ui.View):
     ):
         # noinspection PyTypeChecker
         bot: Bloo = interaction.client
-        current_state = await bot.fetchval(
+        current_state = await bot.fetch(
             "SELECT force_verification FROM nsv_settings WHERE guild_id = $1",
             interaction.guild.id,
         )
