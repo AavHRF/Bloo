@@ -73,12 +73,13 @@ class SettingsView(discord.ui.View):
         # noinspection PyTypeChecker
         bot: Bloo = interaction.client
         await bot.execute(
-            "INSERT INTO nsv_settings (guild_id, verified_role, guest_role, resident_role, wa_resident_role) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (guild_id) DO UPDATE SET verified_role = $2, guest_role = $3, resident_role = $4, wa_resident_role = $5",
+            "INSERT INTO nsv_settings (guild_id, verified_role, guest_role, resident_role, wa_resident_role, force_verification) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (guild_id) DO UPDATE SET verified_role = $2, guest_role = $3, resident_role = $4, wa_resident_role = $5",
             interaction.guild.id,
             self.v.values[0].id if self.v.values else 0,
             self.g.values[0].id if self.g.values else 0,
             self.r.values[0].id if self.r.values else 0,
             self.wr.values[0].id if self.wr.values else 0,
+            False
         )
         await interaction.response.send_message("Settings saved!", ephemeral=True)
         for child in self.children:
@@ -109,9 +110,9 @@ class SettingsView(discord.ui.View):
         await interaction.response.send_modal(VerificationMessageModal())
 
     @discord.ui.button(
-        label="Disable Forced Verification", style=discord.ButtonStyle.red, row=4
+        label="Enable Forced Verification", style=discord.ButtonStyle.red, row=4
     )
-    async def disable_verification(
+    async def enable_verification(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         # noinspection PyTypeChecker
@@ -119,7 +120,7 @@ class SettingsView(discord.ui.View):
         await bot.execute(
             "INSERT INTO nsv_settings (guild_id, force_verification) VALUES ($1, $2) ON CONFLICT (guild_id) DO UPDATE SET force_verification = $2",
             interaction.guild.id,
-            False,
+            True,
         )
         await interaction.response.send_message("Disabled!", ephemeral=True)
         button.disabled = True

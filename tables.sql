@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS nsv_settings (
     verified_role BIGINT,
     region TEXT,
     welcome_message TEXT,
+    force_verification BOOLEAN,
     PRIMARY KEY (guild_id)
 );
 
@@ -40,4 +41,12 @@ CREATE TABLE IF NOT EXISTS nsv_ban_table(
     nation VARCHAR(50) NOT NULL,
     reason VARCHAR(1000) NOT NULL,
     UNIQUE (nation, guild_id)
+);
+
+CREATE TABLE IF NOT EXISTS react_roles (
+    guild_id BIGINT NOT NULL,
+    message_id BIGINT NOT NULL,
+    role_id BIGINT NOT NULL,
+    emoji VARCHAR(50) NOT NULL,
+    UNIQUE (guild_id, message_id, emoji)
 );

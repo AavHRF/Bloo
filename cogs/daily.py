@@ -63,6 +63,8 @@ class DailyUpdate(commands.Cog):
             )
             if settings[0]["region"] is None:
                 continue
+            if not settings[0]["force_verification"]:
+                continue
             guild_members = await self.bot.fetch(
                 "SELECT discord_id, nation FROM nsv_table WHERE guild_id = $1", guild_id
             )
