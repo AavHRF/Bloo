@@ -70,6 +70,17 @@ class DailyUpdate(commands.Cog):
             guest_role = guild_obj.get_role(settings[0]["guest_role"])
             wa_resident_role = guild_obj.get_role(settings[0]["wa_resident_role"])
             resident_role = guild_obj.get_role(settings[0]["resident_role"])
+            verified_role = guild_obj.get_role(settings[0]["verified_role"])
+            for member in guild_obj.members:
+                if member.id not in [m["discord_id"] for m in guild_members]:
+                    if verified_role in member.roles:
+                        await member.remove_roles(verified_role)
+                    if guest_role in member.roles:
+                        await member.remove_roles(guest_role)
+                    if wa_resident_role in member.roles:
+                        await member.remove_roles(wa_resident_role)
+                    if resident_role in member.roles:
+                        await member.remove_roles(resident_role)
             for member in guild_members:
                 discord_id = member["discord_id"]
                 nation = member["nation"]
