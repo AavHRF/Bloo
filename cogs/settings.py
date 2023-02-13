@@ -108,6 +108,23 @@ class SettingsView(discord.ui.View):
     ):
         await interaction.response.send_modal(VerificationMessageModal())
 
+    @discord.ui.button(
+        label="Disable Forced Verification", style=discord.ButtonStyle.red, row=4
+    )
+    async def disable_verification(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        # noinspection PyTypeChecker
+        bot: Bloo = interaction.client
+        await bot.execute(
+            "INSERT INTO nsv_settings (guild_id, force_verification) VALUES ($1, $2) ON CONFLICT (guild_id) DO UPDATE SET force_verification = $2",
+            interaction.guild.id,
+            False,
+        )
+        await interaction.response.send_message("Disabled!", ephemeral=True)
+        button.disabled = True
+        await self.message.edit(view=self)
+
     @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Verified Role", row=0)
     async def v(self, interaction: discord.Interaction, select: discord.ui.Select):
         await interaction.response.defer()
