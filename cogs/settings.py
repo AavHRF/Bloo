@@ -265,11 +265,20 @@ class Settings(commands.Cog):
     async def settings(self, interaction: discord.Interaction):
         """Configure NSV settings for the server"""
         await interaction.response.defer(ephemeral=True)
-        embed = discord.Embed(
-            title="Settings",
-            description="This menu lets you set the roles for the bot to use, along with the region your server is for.",
-            color=discord.Color.blurple(),
+        current = await self.bot.fetch(
+            "SELECT * FROM nsv_settings WHERE guild_id = $1", interaction.guild.id
         )
+        if current:
+            current = current[0]
+            embed = discord.Embed(
+                title="Settings",
+                description=f"This menu lets you set the roles for the bot to use, along with the region your server "
+                            f"is for.\n **__Your current settings:__**\n - Region: {current['region']}\n - G"
+                            f"uest role <&{current['guest_role']}>\n - Resident role <&{current['resident_role']}>\n "
+                            f"- WA Resident role <&{current['wa_resident_role']}>\n - Verified role <&"
+                            f"{current['verified_role']}>\n - Forced verification {current['force_verification']}",
+                color=discord.Color.blurple(),
+            )
         menu = await interaction.followup.send(embed=embed, ephemeral=True)
         await menu.edit(view=SettingsView(menu))
 
