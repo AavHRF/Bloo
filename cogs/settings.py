@@ -279,6 +279,13 @@ class Settings(commands.Cog):
                             f"{current['verified_role']}>\n - Forced verification {current['force_verification']}",
                 color=discord.Color.blurple(),
             )
+        else:
+            embed = discord.Embed(
+                title="Settings",
+                description="This menu lets you set the roles for the bot to use, along with the region your server "
+                            "is for",
+                color=discord.Color.blurple(),
+            )
         menu = await interaction.followup.send(embed=embed, ephemeral=True)
         await menu.edit(view=SettingsView(menu))
 
