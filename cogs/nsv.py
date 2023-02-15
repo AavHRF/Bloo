@@ -153,7 +153,14 @@ class NSV(commands.Cog):
             await ctx.author.send(welcome_message)
 
         else:
-            print("inside verified no set region")
+            status = "guest"
+            await self.bot.execute(
+                "INSERT INTO nsv_table (discord_id, nation, guild_id, status) VALUES ($1, $2, $3, $4) ON CONFLICT (discord_id, guild_id) DO UPDATE SET nation = $2, status = $4",
+                ctx.author.id,
+                nation,
+                ctx.guild.id,
+                status,
+            )
             verified = ctx.guild.get_role(settings[0]["verified_role"])
             await ctx.author.add_roles(verified, reason="Verified via NSV.")
 
