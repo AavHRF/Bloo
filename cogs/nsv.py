@@ -153,7 +153,7 @@ class NSV(commands.Cog):
             await ctx.author.send(welcome_message)
 
         else:
-            status = "guest"
+            status = "verified"
             await self.bot.execute(
                 "INSERT INTO nsv_table (discord_id, nation, guild_id, status) VALUES ($1, $2, $3, $4) ON CONFLICT (discord_id, guild_id) DO UPDATE SET nation = $2, status = $4",
                 ctx.author.id,
@@ -163,6 +163,7 @@ class NSV(commands.Cog):
             )
             verified = ctx.guild.get_role(settings[0]["verified_role"])
             await ctx.author.add_roles(verified, reason="Verified via NSV.")
+            await ctx.author.send(welcome_message)
 
     @commands.guild_only()
     @app_commands.guild_only()
