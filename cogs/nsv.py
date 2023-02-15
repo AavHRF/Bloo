@@ -104,9 +104,11 @@ class NSV(commands.Cog):
         data = await resp.text()
         root = ElementTree.fromstring(data)
         region = root.find("REGION").text.lower().replace(" ", "_")
+        print(region)
         wa = root.find("UNSTATUS").text
         status = None
         if settings[0]["region"]:
+            print("stepped inside region set")
             if settings[0]["region"] != region:
                 status = "guest"
             else:
@@ -151,6 +153,7 @@ class NSV(commands.Cog):
             await ctx.author.send(welcome_message)
 
         else:
+            print("inside verified no set region")
             verified = ctx.guild.get_role(settings[0]["verified_role"])
             await ctx.author.add_roles(verified, reason="Verified via NSV.")
 
