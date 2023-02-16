@@ -273,7 +273,7 @@ class Settings(commands.Cog):
             embed = discord.Embed(
                 title="Settings",
                 description=f"This menu lets you set the roles for the bot to use, along with the region your server "
-                            f"is for.\n **__Your current settings:__**\n - Region: {current['region'].title().replace('_', ' ')}\n - G"
+                            f"is for.\n **__Your current settings:__**\n - Region: {current['region'].title().replace('_', ' ') if current['region'] else 'None'}\n - G"
                             f"uest role <@&{current['guest_role']}>\n - Resident role <@&{current['resident_role']}>\n "
                             f"- WA Resident role <@&{current['wa_resident_role']}>\n - Verified role <@&"
                             f"{current['verified_role']}>\n - Forced verification {current['force_verification']}",
