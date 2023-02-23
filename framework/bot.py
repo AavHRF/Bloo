@@ -18,7 +18,7 @@ class Bloo(commands.Bot):
         self.pool: Optional[asyncpg.Pool] = None
         self.config = json.load(open("config.json"))
         self.session = None
-        self.limiter = AsyncLimiter(50, 30)
+        self.limiter = AsyncLimiter(25, 30)
 
     async def setup_hook(self) -> None:
         self.pool = await asyncpg.create_pool(
