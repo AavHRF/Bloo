@@ -61,16 +61,15 @@ class developer(commands.Cog):
     # noinspection DuplicatedCode
     @commands.command()
     @commands.is_owner()
-    async def daily_update(self, ctx: commands.Context, skip_dump: str = None):
+    async def daily_update(self):
         now_ts = datetime.datetime.now()
-        if skip_dump is None:
-            async with self.bot.session.get(
+        async with self.bot.session.get(
                 "https://www.nationstates.net/pages/nations.xml.gz"
-            ) as resp:
-                with open("nations.xml.gz", "wb") as f:
-                    f.write(await resp.read())
-            with gzip.open("nations.xml.gz", "rb") as f:
-                tree = await asyncio.to_thread(self.parse, f)
+        ) as resp:
+            with open("nations.xml.gz", "wb") as f:
+                f.write(await resp.read())
+        with gzip.open("nations.xml.gz", "rb") as f:
+            tree = await asyncio.to_thread(self.parse, f)
             root = tree.getroot()
             for nation in root.findall("NATION"):
                 name = nation.find("NAME").text.lower().replace(" ", "_")
@@ -89,9 +88,6 @@ class developer(commands.Cog):
                     endorsements,
                     now_ts,
                 )
-        else:
-            print("Skipping dump fetch")
-
         all_guilds = await self.bot.fetch("SELECT guild_id FROM nsv_settings")
         for guild in all_guilds:
             guild_id = guild["guild_id"]
@@ -107,6 +103,8 @@ class developer(commands.Cog):
             )
             if settings[0]["region"] is None:
                 continue
+            if not settings[0]["force_verification"]:
+                continue
             guild_members = await self.bot.fetch(
                 "SELECT discord_id, nation FROM nsv_table WHERE guild_id = $1", guild_id
             )
@@ -114,6 +112,26 @@ class developer(commands.Cog):
             guest_role = guild_obj.get_role(settings[0]["guest_role"])
             wa_resident_role = guild_obj.get_role(settings[0]["wa_resident_role"])
             resident_role = guild_obj.get_role(settings[0]["resident_role"])
+            verified_role = guild_obj.get_role(settings[0]["verified_role"])
+            if any(
+                [
+                    guest_role is None,
+                    wa_resident_role is None,
+                    resident_role is None,
+                    verified_role is None,
+                ]
+            ):
+                print("At least one role in this guild is not set!")
+            for member in guild_obj.members:
+                if member.id not in [m["discord_id"] for m in guild_members]:
+                    if verified_role in member.roles and verified_role is not None:
+                        await member.remove_roles(verified_role)
+                    if guest_role in member.roles and guest_role is not None:
+                        await member.remove_roles(guest_role)
+                    if wa_resident_role in member.roles and wa_resident_role is not None:
+                        await member.remove_roles(wa_resident_role)
+                    if resident_role in member.roles and resident_role is not None:
+                        await member.remove_roles(resident_role)
             for member in guild_members:
                 discord_id = member["discord_id"]
                 nation = member["nation"]
@@ -133,26 +151,26 @@ class developer(commands.Cog):
                         continue
                     if vals[0]["region"] != settings[0]["region"]:
                         status = "guest"
-                        if guest_role not in member_obj.roles:
+                        if guest_role not in member_obj.roles and guest_role is not None:
                             await member_obj.add_roles(guest_role)
-                        if wa_resident_role in member_obj.roles:
+                        if wa_resident_role in member_obj.roles and wa_resident_role is not None:
                             await member_obj.remove_roles(wa_resident_role)
-                        if resident_role in member_obj.roles:
+                        if resident_role in member_obj.roles and resident_role is not None:
                             await member_obj.remove_roles(resident_role)
                     else:
                         if vals[0]["unstatus"] == "WA Member":
                             status = "wa-resident"
-                            if guest_role in member_obj.roles:
+                            if guest_role in member_obj.roles and guest_role is not None:
                                 await member_obj.remove_roles(guest_role)
-                            if wa_resident_role not in member_obj.roles:
+                            if wa_resident_role not in member_obj.roles and wa_resident_role is not None:
                                 await member_obj.add_roles(wa_resident_role)
-                            if resident_role not in member_obj.roles:
+                            if resident_role not in member_obj.roles and resident_role is not None:
                                 await member_obj.add_roles(resident_role)
                         else:
                             status = "resident"
-                            if guest_role in member_obj.roles:
+                            if guest_role in member_obj.roles and guest_role is not None:
                                 await member_obj.remove_roles(guest_role)
-                            if resident_role not in member_obj.roles:
+                            if resident_role not in member_obj.roles and resident_role is not None:
                                 await member_obj.add_roles(resident_role)
                     await self.bot.execute(
                         "UPDATE nsv_table SET status = $1 WHERE discord_id = $2 AND guild_id = $3",
