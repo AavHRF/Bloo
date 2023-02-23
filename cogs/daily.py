@@ -24,7 +24,7 @@ class DailyUpdate(commands.Cog):
     async def daily_update(self):
         now_ts = datetime.datetime.now()
         async with self.bot.session.get(
-            "https://www.nationstates.net/pages/nations.xml.gz"
+                "https://www.nationstates.net/pages/nations.xml.gz"
         ) as resp:
             with open("nations.xml.gz", "wb") as f:
                 f.write(await resp.read())
@@ -73,15 +73,24 @@ class DailyUpdate(commands.Cog):
             wa_resident_role = guild_obj.get_role(settings[0]["wa_resident_role"])
             resident_role = guild_obj.get_role(settings[0]["resident_role"])
             verified_role = guild_obj.get_role(settings[0]["verified_role"])
+            if any(
+                    [
+                        guest_role is None,
+                        wa_resident_role is None,
+                        resident_role is None,
+                        verified_role is None,
+                    ]
+            ):
+                print("At least one role in this guild is not set!")
             for member in guild_obj.members:
                 if member.id not in [m["discord_id"] for m in guild_members]:
-                    if verified_role in member.roles:
+                    if verified_role in member.roles and verified_role is not None:
                         await member.remove_roles(verified_role)
-                    if guest_role in member.roles:
+                    if guest_role in member.roles and guest_role is not None:
                         await member.remove_roles(guest_role)
-                    if wa_resident_role in member.roles:
+                    if wa_resident_role in member.roles and wa_resident_role is not None:
                         await member.remove_roles(wa_resident_role)
-                    if resident_role in member.roles:
+                    if resident_role in member.roles and resident_role is not None:
                         await member.remove_roles(resident_role)
             for member in guild_members:
                 discord_id = member["discord_id"]
@@ -102,26 +111,26 @@ class DailyUpdate(commands.Cog):
                         continue
                     if vals[0]["region"] != settings[0]["region"]:
                         status = "guest"
-                        if guest_role not in member_obj.roles:
+                        if guest_role not in member_obj.roles and guest_role is not None:
                             await member_obj.add_roles(guest_role)
-                        if wa_resident_role in member_obj.roles:
+                        if wa_resident_role in member_obj.roles and wa_resident_role is not None:
                             await member_obj.remove_roles(wa_resident_role)
-                        if resident_role in member_obj.roles:
+                        if resident_role in member_obj.roles and resident_role is not None:
                             await member_obj.remove_roles(resident_role)
                     else:
                         if vals[0]["unstatus"] == "WA Member":
                             status = "wa-resident"
-                            if guest_role in member_obj.roles:
+                            if guest_role in member_obj.roles and guest_role is not None:
                                 await member_obj.remove_roles(guest_role)
-                            if wa_resident_role not in member_obj.roles:
+                            if wa_resident_role not in member_obj.roles and wa_resident_role is not None:
                                 await member_obj.add_roles(wa_resident_role)
-                            if resident_role not in member_obj.roles:
+                            if resident_role not in member_obj.roles and resident_role is not None:
                                 await member_obj.add_roles(resident_role)
                         else:
                             status = "resident"
-                            if guest_role in member_obj.roles:
+                            if guest_role in member_obj.roles and guest_role is not None:
                                 await member_obj.remove_roles(guest_role)
-                            if resident_role not in member_obj.roles:
+                            if resident_role not in member_obj.roles and resident_role is not None:
                                 await member_obj.add_roles(resident_role)
                     await self.bot.execute(
                         "UPDATE nsv_table SET status = $1 WHERE discord_id = $2 AND guild_id = $3",
