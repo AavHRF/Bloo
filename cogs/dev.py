@@ -61,7 +61,7 @@ class developer(commands.Cog):
     # noinspection DuplicatedCode
     @commands.command()
     @commands.is_owner()
-    async def daily_update(self):
+    async def daily_update(self, ctx: commands.Context):
         now_ts = datetime.datetime.now()
         async with self.bot.session.get(
                 "https://www.nationstates.net/pages/nations.xml.gz"
