@@ -24,7 +24,7 @@ class DailyUpdate(commands.Cog):
     async def daily_update(self):
         now_ts = datetime.datetime.now()
         async with self.bot.session.get(
-                "https://www.nationstates.net/pages/nations.xml.gz"
+            "https://www.nationstates.net/pages/nations.xml.gz"
         ) as resp:
             with open("nations.xml.gz", "wb") as f:
                 f.write(await resp.read())
@@ -74,12 +74,12 @@ class DailyUpdate(commands.Cog):
             resident_role = guild_obj.get_role(settings[0]["resident_role"])
             verified_role = guild_obj.get_role(settings[0]["verified_role"])
             if any(
-                    [
-                        guest_role is None,
-                        wa_resident_role is None,
-                        resident_role is None,
-                        verified_role is None,
-                    ]
+                [
+                    guest_role is None,
+                    wa_resident_role is None,
+                    resident_role is None,
+                    verified_role is None,
+                ]
             ):
                 print("At least one role in this guild is not set!")
             for member in guild_obj.members:
@@ -88,7 +88,10 @@ class DailyUpdate(commands.Cog):
                         await member.remove_roles(verified_role)
                     if guest_role in member.roles and guest_role is not None:
                         await member.remove_roles(guest_role)
-                    if wa_resident_role in member.roles and wa_resident_role is not None:
+                    if (
+                        wa_resident_role in member.roles
+                        and wa_resident_role is not None
+                    ):
                         await member.remove_roles(wa_resident_role)
                     if resident_role in member.roles and resident_role is not None:
                         await member.remove_roles(resident_role)
@@ -111,26 +114,50 @@ class DailyUpdate(commands.Cog):
                         continue
                     if vals[0]["region"] != settings[0]["region"]:
                         status = "guest"
-                        if guest_role not in member_obj.roles and guest_role is not None:
+                        if (
+                            guest_role not in member_obj.roles
+                            and guest_role is not None
+                        ):
                             await member_obj.add_roles(guest_role)
-                        if wa_resident_role in member_obj.roles and wa_resident_role is not None:
+                        if (
+                            wa_resident_role in member_obj.roles
+                            and wa_resident_role is not None
+                        ):
                             await member_obj.remove_roles(wa_resident_role)
-                        if resident_role in member_obj.roles and resident_role is not None:
+                        if (
+                            resident_role in member_obj.roles
+                            and resident_role is not None
+                        ):
                             await member_obj.remove_roles(resident_role)
                     else:
                         if vals[0]["unstatus"] == "WA Member":
                             status = "wa-resident"
-                            if guest_role in member_obj.roles and guest_role is not None:
+                            if (
+                                guest_role in member_obj.roles
+                                and guest_role is not None
+                            ):
                                 await member_obj.remove_roles(guest_role)
-                            if wa_resident_role not in member_obj.roles and wa_resident_role is not None:
+                            if (
+                                wa_resident_role not in member_obj.roles
+                                and wa_resident_role is not None
+                            ):
                                 await member_obj.add_roles(wa_resident_role)
-                            if resident_role not in member_obj.roles and resident_role is not None:
+                            if (
+                                resident_role not in member_obj.roles
+                                and resident_role is not None
+                            ):
                                 await member_obj.add_roles(resident_role)
                         else:
                             status = "resident"
-                            if guest_role in member_obj.roles and guest_role is not None:
+                            if (
+                                guest_role in member_obj.roles
+                                and guest_role is not None
+                            ):
                                 await member_obj.remove_roles(guest_role)
-                            if resident_role not in member_obj.roles and resident_role is not None:
+                            if (
+                                resident_role not in member_obj.roles
+                                and resident_role is not None
+                            ):
                                 await member_obj.add_roles(resident_role)
                     await self.bot.execute(
                         "UPDATE nsv_table SET status = $1 WHERE discord_id = $2 AND guild_id = $3",
@@ -139,7 +166,99 @@ class DailyUpdate(commands.Cog):
                         guild_id,
                     )
             print(f"Updated {guild_obj.name} | ID: ({guild_id})")
-        print("Finished update.")
+        print("Finished daily update.")
+        print("Starting NSL update...")
+        # Download the region dump
+        async with self.bot.session.get(
+            "https://www.nationstates.net/pages/regions.xml.gz"
+        ) as resp:
+            if resp.status != 200:
+                print("Could not download region dump!")
+                return
+            with open("regions.xml.gz", "wb") as f:
+                f.write(await resp.read())
+        # Unzip the file
+        with gzip.open("regions.xml.gz", "rb") as f_in:
+            # Read the file into etree
+            tree = await asyncio.to_thread(self.parse, f_in)
+        # Get the root element
+        root = tree.getroot()
+        for region in root.findall("REGION"):
+            name = region.find("NAME").text
+            founder = region.find("FOUNDER").text
+            delegate = region.find("DELEGATE").text
+            delegatevotes = region.find("DELEGATEVOTES").text
+            numnations = region.find("NUMNATIONS").text
+            await self.bot.execute(
+                "INSERT INTO nsl_region_dump (region, founder, delegate, delegatevotes, numnations) VALUES ($1, $2, $3, $4, $5, $6)",
+                name,
+                founder,
+                delegate,
+                delegatevotes,
+                numnations,
+                now_ts,
+            )
+        print("Finished updating NSL region dump.")
+        print("Updating server roles...")
+        nsl_update = False  # Temporary guard to prevent NSL update from running while people verify
+        if nsl_update:
+            nsl = self.bot.get_guild(414822188273762306)
+            console = nsl.get_channel(626654671167160320)
+            founder_role = nsl.get_role(414822833873747984)
+            delegate_role = nsl.get_role(622961669634785302)
+            senior = nsl.get_role(
+                414871607736008715
+            )  # Seniors are immune to losing their roles
+            await nsl.chunk()  # Ensure that NSL is in the cache so that we can update the members properly
+            for member in nsl.members:
+                if member.bot:
+                    continue
+                else:
+                    mem = await self.bot.fetch(
+                        "SELECT nation FROM nsv_table WHERE discord_id = $1", member.id
+                    )
+                    if not mem:
+                        # Gotta be verified to have roles! Unless you're a senior... then you're exempt. That's a
+                        # sekrit tho.
+                        if founder_role in member.roles and senior not in member.roles:
+                            await member.remove_roles(founder_role)
+                        if delegate_role in member.roles and senior not in member.roles:
+                            await member.remove_roles(delegate_role)
+                    else:
+                        vals = await self.bot.fetch(
+                            "SELECT * FROM nsl_region_dump WHERE founder OR delegate = $1",
+                            nation,
+                        )
+                        if not vals:
+                            if founder_role in member.roles and senior not in member.roles:
+                                await member.remove_roles(founder_role)
+                            if delegate_role in member.roles and senior not in member.roles:
+                                await member.remove_roles(delegate_role)
+                            continue
+
+                        if vals[0]["founder"] == nation:
+                            if founder_role not in member.roles:
+                                await member.add_roles(founder_role)
+                        else:
+                            if (
+                                founder_role in member.roles
+                                and senior not in member.roles
+                            ):
+                                await member.remove_roles(founder_role)
+                        if vals[0]["delegate"] == nation:
+                            if delegate_role not in member.roles:
+                                await member.add_roles(delegate_role)
+                        else:
+                            if (
+                                delegate_role in member.roles
+                                and senior not in member.roles
+                            ):
+                                await member.remove_roles(delegate_role)
+                        await console.send(
+                            f"Updated {member.name} | ID: ({member.id}) STATUS "
+                            f"({vals[0]['founder']}) ({vals[0]['delegate']})"
+                        )
+            print("Done with NSL update.")
 
     @daily_update.before_loop
     async def before_daily_update(self):

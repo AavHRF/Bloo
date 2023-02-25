@@ -105,55 +105,33 @@ class NSV(commands.Cog):
         root = ElementTree.fromstring(data)
         region = root.find("REGION").text.lower().replace(" ", "_")
         print(region)
-        wa = root.find("UNSTATUS").text
-        status = None
-        if settings[0]["region"]:
-            print("stepped inside region set")
-            if settings[0]["region"] != region:
-                status = "guest"
-            else:
-                if "WA" in wa:
-                    status = "wa-resident"
-                else:
-                    status = "resident"
-            await self.bot.execute(
-                "INSERT INTO nsv_table (discord_id, nation, guild_id, status) VALUES ($1, $2, $3, $4) ON CONFLICT (discord_id, guild_id) DO UPDATE SET nation = $2, status = $4",
-                ctx.author.id,
-                nation,
-                ctx.guild.id,
-                status,
+        if ctx.guild.id == 414822188273762306:
+            rresp = await self.bot.ns_request(
+                {
+                    "region": region,
+                    "q": "founder+delegate",
+                },
+                "GET",
             )
-            verified_role = ctx.guild.get_role(settings[0]["verified_role"])
-            if status == "guest":
-                guest_role = ctx.guild.get_role(settings[0]["guest_role"])
-                if not guest_role:
-                    pass
-                else:
-                    await ctx.author.add_roles(
-                        verified_role, guest_role, reason="Verified via NSV."
-                    )
-            else:
-                resident_role = ctx.guild.get_role(settings[0]["resident_role"])
-                if not resident_role:
-                    pass
-                else:
-                    await ctx.author.add_roles(
-                        verified_role, resident_role, reason="Verified via NSV."
-                    )
-                    if status == "wa-resident":
-                        wa_resident_role = ctx.guild.get_role(
-                            settings[0]["wa_resident_role"]
-                        )
-                        if not wa_resident_role:
-                            pass
-                        else:
-                            await ctx.author.add_roles(
-                                wa_resident_role, reason="Verified via NSV."
-                            )
-            await ctx.author.send(welcome_message)
+            if not rresp.ok:
+                await ctx.author.send("An error occurred.")
+                return
 
-        else:
-            status = "verified"
+            rroot = ElementTree.fromstring(await rresp.text())
+            rfounder = rroot.find("FOUNDER").text
+            rdelegate = rroot.find("DELEGATE").text
+            founder_role = ctx.guild.get_role(414822833873747984)
+            delegate_role = ctx.guild.get_role(622961669634785302)
+
+            if rfounder == nation:
+                status = "founder"
+            if rdelegate == nation:
+                status = "delegate"
+                if status == "founder":
+                    status = "founder+delegate"
+            else:
+                status = "resident"
+
             await self.bot.execute(
                 "INSERT INTO nsv_table (discord_id, nation, guild_id, status) VALUES ($1, $2, $3, $4) ON CONFLICT (discord_id, guild_id) DO UPDATE SET nation = $2, status = $4",
                 ctx.author.id,
@@ -161,9 +139,74 @@ class NSV(commands.Cog):
                 ctx.guild.id,
                 status,
             )
-            verified = ctx.guild.get_role(settings[0]["verified_role"])
-            await ctx.author.add_roles(verified, reason="Verified via NSV.")
+            if "founder" in status:
+                await ctx.author.add_roles(founder_role, reason="Verified via NSV")
+            if "delegate" in status:
+                await ctx.author.add_roles(delegate_role, reason="Verified via NSV")
+            if "resident" in status:
+                console = ctx.guild.get_channel(626654671167160320)
+                await console.send(f"Non-Founder/Delegate joined: {ctx.author.mention}")
             await ctx.author.send(welcome_message)
+        else:
+            wa = root.find("UNSTATUS").text
+            status = None
+            if settings[0]["region"]:
+                print("stepped inside region set")
+                if settings[0]["region"] != region:
+                    status = "guest"
+                else:
+                    if "WA" in wa:
+                        status = "wa-resident"
+                    else:
+                        status = "resident"
+                await self.bot.execute(
+                    "INSERT INTO nsv_table (discord_id, nation, guild_id, status) VALUES ($1, $2, $3, $4) ON CONFLICT (discord_id, guild_id) DO UPDATE SET nation = $2, status = $4",
+                    ctx.author.id,
+                    nation,
+                    ctx.guild.id,
+                    status,
+                )
+                verified_role = ctx.guild.get_role(settings[0]["verified_role"])
+                if status == "guest":
+                    guest_role = ctx.guild.get_role(settings[0]["guest_role"])
+                    if not guest_role:
+                        pass
+                    else:
+                        await ctx.author.add_roles(
+                            verified_role, guest_role, reason="Verified via NSV."
+                        )
+                else:
+                    resident_role = ctx.guild.get_role(settings[0]["resident_role"])
+                    if not resident_role:
+                        pass
+                    else:
+                        await ctx.author.add_roles(
+                            verified_role, resident_role, reason="Verified via NSV."
+                        )
+                        if status == "wa-resident":
+                            wa_resident_role = ctx.guild.get_role(
+                                settings[0]["wa_resident_role"]
+                            )
+                            if not wa_resident_role:
+                                pass
+                            else:
+                                await ctx.author.add_roles(
+                                    wa_resident_role, reason="Verified via NSV."
+                                )
+                await ctx.author.send(welcome_message)
+
+            else:
+                status = "verified"
+                await self.bot.execute(
+                    "INSERT INTO nsv_table (discord_id, nation, guild_id, status) VALUES ($1, $2, $3, $4) ON CONFLICT (discord_id, guild_id) DO UPDATE SET nation = $2, status = $4",
+                    ctx.author.id,
+                    nation,
+                    ctx.guild.id,
+                    status,
+                )
+                verified = ctx.guild.get_role(settings[0]["verified_role"])
+                await ctx.author.add_roles(verified, reason="Verified via NSV.")
+                await ctx.author.send(welcome_message)
 
     @commands.guild_only()
     @app_commands.guild_only()
