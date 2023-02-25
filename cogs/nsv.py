@@ -58,7 +58,7 @@ class NSV(commands.Cog):
                 "message",
                 check=lambda m: m.author == ctx.author
                 and m.channel == ctx.author.dm_channel,
-                timeout=60,
+                timeout=180,
             )
         except asyncio.TimeoutError:
             await ctx.author.send("Timed out.")
