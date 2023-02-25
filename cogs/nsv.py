@@ -120,6 +120,8 @@ class NSV(commands.Cog):
             rroot = ElementTree.fromstring(await rresp.text())
             rfounder = rroot.find("FOUNDER").text
             rdelegate = rroot.find("DELEGATE").text
+            print(rfounder)
+            print(rdelegate)
             founder_role = ctx.guild.get_role(414822833873747984)
             delegate_role = ctx.guild.get_role(622961669634785302)
 
