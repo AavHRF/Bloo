@@ -125,13 +125,14 @@ class NSV(commands.Cog):
             founder_role = ctx.guild.get_role(414822833873747984)
             delegate_role = ctx.guild.get_role(622961669634785302)
 
-            if rfounder == nation:
+            if str(rfounder) == str(nation):
                 status = "founder"
-            if rdelegate == nation:
+            if str(rdelegate) == str(nation):
                 status = "delegate"
                 if status == "founder":
                     status = "founder+delegate"
             else:
+                print(rfounder == nation)
                 status = "resident"
 
             await self.bot.execute(
