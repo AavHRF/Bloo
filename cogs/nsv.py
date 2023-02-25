@@ -131,7 +131,7 @@ class NSV(commands.Cog):
                 status = "delegate"
                 if status == "founder":
                     status = "founder+delegate"
-            else:
+            if str(rfounder) != str(nation) and str(rdelegate) != str(nation):
                 print(rfounder == nation)
                 status = "resident"
 
