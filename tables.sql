@@ -63,5 +63,5 @@ CREATE TABLE IF NOT EXISTS nsl_region_table (
     wa_delegate VARCHAR(50),
     delegatevotes INTEGER,
     numnations INTEGER,
-    inserted_at TIMESTAMP,
+    inserted_at TIMESTAMP
 );
