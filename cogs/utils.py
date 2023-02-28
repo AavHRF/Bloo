@@ -97,15 +97,25 @@ class Utility(commands.Cog):
         """
         if not member:
             member = ctx.author
-        nation = await self.bot.fetch(
-            "SELECT nation FROM nsv_table WHERE discord_id = $1 AND guild_id = $2",
-            member.id,
-            ctx.guild.id,
-        )
-        if not nation:
-            nation = "None set"
+        if ctx.guild.id != 414822188273762306:
+            nation = await self.bot.fetch(
+                "SELECT nation FROM nsv_table WHERE discord_id = $1 AND guild_id = $2",
+                member.id,
+                ctx.guild.id,
+            )
+            if not nation:
+                nation = "None set"
+            else:
+                nation = nation[0]["nation"]
         else:
-            nation = nation[0]["nation"]
+            nations = await self.bot.fetch(
+                "SELECT nation FROM nsl_table WHERE discord_id = $1",
+                member.id,
+            )
+            if not nations:
+                nation = "None set"
+            else:
+                nation = ", ".join([i["nation"].replace("_", " ").title() for i in nations])
 
         embed = discord.Embed(
             title=f"Information for {member.display_name}",
