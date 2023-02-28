@@ -50,3 +50,9 @@ CREATE TABLE IF NOT EXISTS react_roles (
     emoji VARCHAR(50) NOT NULL,
     UNIQUE (guild_id, message_id, emoji)
 );
+
+CREATE TABLE IF NOT EXISTS nsl_table (
+    discord_id BIGINT,
+    nation VARCHAR(50),
+    status VARCHAR(20)
+);
