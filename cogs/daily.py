@@ -190,7 +190,7 @@ class DailyUpdate(commands.Cog):
             delegatevotes = region.find("DELEGATEVOTES").text
             numnations = region.find("NUMNATIONS").text
             await self.bot.execute(
-                "INSERT INTO nsl_region_dump (region, founder, delegate, delegatevotes, numnations) VALUES ($1, $2, $3, $4, $5)",
+                "INSERT INTO nsl_region_dump (region, founder, wa_delegate, delegatevotes, numnations, inserted_at) VALUES ($1, $2, $3, $4, $5, $6)",
                 name,
                 founder,
                 delegate,
@@ -225,83 +225,44 @@ class DailyUpdate(commands.Cog):
                         if delegate_role in member.roles and senior not in member.roles:
                             await member.remove_roles(delegate_role)
                     else:
-                        if len(mem) == 1:
+                        founder = False
+                        delegate = False
+                        for record in mem:
                             vals = await self.bot.fetch(
-                                "SELECT * FROM nsl_region_dump WHERE founder OR delegate = $1",
-                                mem[0]["nation"],
+                                "SELECT * FROM nsl_region_dump WHERE founder OR wa_delegate = $1 ORDER BY inserted_at DESC LIMIT 1",
+                                record["nation"],
                             )
-                            if not vals:
-                                if founder_role in member.roles and senior not in member.roles:
-                                    await member.remove_roles(founder_role)
-                                if delegate_role in member.roles and senior not in member.roles:
-                                    await member.remove_roles(delegate_role)
-                                continue
-
                             if vals[0]["founder"] == nation:
-                                if founder_role not in member.roles:
-                                    await member.add_roles(founder_role)
-                            else:
-                                if (
-                                    founder_role in member.roles
-                                    and senior not in member.roles
-                                ):
-                                    await member.remove_roles(founder_role)
+                                founder = True
                             if vals[0]["delegate"] == nation:
-                                if delegate_role not in member.roles:
-                                    await member.add_roles(delegate_role)
-                            else:
-                                if (
-                                    delegate_role in member.roles
-                                    and senior not in member.roles
-                                ):
-                                    await member.remove_roles(delegate_role)
-                            await console.send(
-                                f"Updated {member.name} | ID: ({member.id}) STATUS "
-                                f"({vals[0]['founder']}) ({vals[0]['delegate']})"
-                            )
+                                delegate = True
+                        if not founder or not delegate:
+                            if founder_role in member.roles and senior not in member.roles and not founder:
+                                await member.remove_roles(founder_role)
+                            if delegate_role in member.roles and senior not in member.roles and not delegate:
+                                await member.remove_roles(delegate_role)
+                            continue
+                        if founder:
+                            if founder_role not in member.roles:
+                                await member.add_roles(founder_role)
                         else:
-                            # There are multiple records for this member
-                            # Iterate through each record and check if the nation is a founder or delegate
-                            # If it is, add the role
-                            # If it isn't, remove the role
-                            founder = False
-                            delegate = False
-                            for record in mem:
-                                vals = await self.bot.fetch(
-                                    "SELECT * FROM nsl_region_dump WHERE founder OR delegate = $1",
-                                    record["nation"],
-                                )
-                                if vals[0]["founder"] == nation:
-                                    founder = True
-                                if vals[0]["delegate"] == nation:
-                                    delegate = True
-                            if not founder or not delegate:
-                                if founder_role in member.roles and senior not in member.roles and not founder:
-                                    await member.remove_roles(founder_role)
-                                if delegate_role in member.roles and senior not in member.roles and not delegate:
-                                    await member.remove_roles(delegate_role)
-                                continue
-                            if founder:
-                                if founder_role not in member.roles:
-                                    await member.add_roles(founder_role)
-                            else:
-                                if (
-                                    founder_role in member.roles
-                                    and senior not in member.roles
-                                ):
-                                    await member.remove_roles(founder_role)
-                            if delegate:
-                                if delegate_role not in member.roles:
-                                    await member.add_roles(delegate_role)
-                            else:
-                                if (
-                                    delegate_role in member.roles
-                                    and senior not in member.roles
-                                ):
-                                    await member.remove_roles(delegate_role)
-                            await console.send(
-                                f"Updated {member.name} | ID: ({member.id}) STATUS "
-                                f"({'FOUNDER' if founder else 'NONFOUNDER'}) ({'DELEGATE' if delegate else 'NONDELEGATE'})"
+                            if (
+                                founder_role in member.roles
+                                and senior not in member.roles
+                            ):
+                                await member.remove_roles(founder_role)
+                        if delegate:
+                            if delegate_role not in member.roles:
+                                await member.add_roles(delegate_role)
+                        else:
+                            if (
+                                delegate_role in member.roles
+                                and senior not in member.roles
+                            ):
+                                await member.remove_roles(delegate_role)
+                        await console.send(
+                            f"Updated {member.name} | ID: ({member.id}) STATUS "
+                            f"({'FOUNDER' if founder else 'NONFOUNDER'}) ({'DELEGATE' if delegate else 'NONDELEGATE'})"
                             )
             print("Done with NSL update.")
 

@@ -56,3 +56,12 @@ CREATE TABLE IF NOT EXISTS nsl_table (
     nation VARCHAR(50),
     status VARCHAR(20)
 );
+
+CREATE TABLE IF NOT EXISTS nsl_region_table (
+    region VARCHAR(1000),
+    founder VARCHAR(50),
+    wa_delegate VARCHAR(50),
+    delegatevotes INTEGER,
+    numnations INTEGER,
+    inserted_at TIMESTAMP,
+);
