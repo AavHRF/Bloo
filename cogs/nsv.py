@@ -140,7 +140,6 @@ class NSV(commands.Cog):
                 ctx.author.id,
                 nation,
                 ctx.guild.id,
-                status,
             )
             if "founder" in status:
                 await ctx.author.add_roles(founder_role, reason="Verified via NSV")
