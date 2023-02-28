@@ -136,7 +136,7 @@ class NSV(commands.Cog):
                 status = "resident"
 
             await self.bot.execute(
-                "INSERT INTO nsl_table (discord_id, nation, status) VALUES ($1, $2, $3, $4)",
+                "INSERT INTO nsl_table (discord_id, nation, status) VALUES ($1, $2, $3)",
                 ctx.author.id,
                 nation,
                 ctx.guild.id,
