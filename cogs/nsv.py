@@ -139,7 +139,7 @@ class NSV(commands.Cog):
                 "INSERT INTO nsl_table (discord_id, nation, status) VALUES ($1, $2, $3)",
                 ctx.author.id,
                 nation,
-                ctx.guild.id,
+                status,
             )
             if "founder" in status:
                 await ctx.author.add_roles(founder_role, reason="Verified via NSV")
