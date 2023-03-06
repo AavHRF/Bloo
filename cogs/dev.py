@@ -249,7 +249,7 @@ class developer(commands.Cog):
                     delegate = False
                     for record in mem:
                         vals = await self.bot.fetch(
-                            "SELECT * FROM nsl_region_table WHERE founder OR wa_delegate = $1 ORDER BY inserted_at DESC LIMIT 1",
+                            "SELECT * FROM nsl_region_table WHERE founder = $1 OR wa_delegate = $1 ORDER BY inserted_at DESC LIMIT 1",
                             record["nation"],
                         )
                         if vals[0]["founder"] == record["nation"]:
