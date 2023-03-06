@@ -182,5 +182,90 @@ class developer(commands.Cog):
         print("Finished update.")
 
 
+    @commands.command()
+    @commands.is_owner()
+    async def nsl_update(self, ctx):
+        log = open("nsl_update.log", "a")
+        nsl = self.bot.get_guild(414822188273762306)
+        console = nsl.get_channel(626654671167160320)
+        founder_role = nsl.get_role(414822833873747984)
+        delegate_role = nsl.get_role(622961669634785302)
+        senior = nsl.get_role(
+            414871607736008715
+        )  # Seniors are immune to losing their roles
+        await nsl.chunk()  # Ensure that NSL is in the cache so that we can update the members properly
+        for member in nsl.members:
+            if member.bot:
+                continue
+            else:
+                mem = await self.bot.fetch(
+                    "SELECT nation FROM nsl_table WHERE discord_id = $1", member.id
+                )
+                if not mem:
+                    # Gotta be verified to have roles! Unless you're a senior... then you're exempt. That's a
+                    # sekrit tho.
+                    if founder_role in member.roles and senior not in member.roles:
+                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | FOUNDER ROLE REMOVED\n")
+                    if delegate_role in member.roles and senior not in member.roles:
+                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | DELEGATE ROLE REMOVED\n")
+                    if founder_role in member.roles and senior in member.roles:
+                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | SENIOR FDR EXEMPT\n")
+                    if delegate_role in member.roles and senior in member.roles:
+                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | SENIOR DEL EXEMPT\n")
+                else:
+                    founder = False
+                    delegate = False
+                    for record in mem:
+                        vals = await self.bot.fetch(
+                            "SELECT * FROM nsl_region_dump WHERE founder OR wa_delegate = $1 ORDER BY inserted_at DESC LIMIT 1",
+                            record["nation"],
+                        )
+                        if vals[0]["founder"] == record["nation"]:
+                            founder = True
+                        if vals[0]["delegate"] == record["nation"]:
+                            delegate = True
+                    if not founder or not delegate:
+                        if founder_role in member.roles and senior not in member.roles and not founder:
+                            log.write(f"{member.name} ({member.id}) | FOUNDER ROLE REMOVED\n")
+                        if delegate_role in member.roles and senior not in member.roles and not delegate:
+                            log.write(f"{member.name} ({member.id}) | DELEGATE ROLE REMOVED\n")
+                        continue
+                    if founder:
+                        if founder_role not in member.roles:
+                            log.write(f"{member.name} ({member.id}) | FOUNDER ROLE ADDED\n")
+                    else:
+                        if (
+                                founder_role in member.roles
+                                and senior not in member.roles
+                        ):
+                            log.write(f"{member.name} ({member.id}) | FOUNDER ROLE REMOVED\n")
+                        if (
+                                founder_role in member.roles
+                                and senior in member.roles
+                        ):
+                            log.write(f"{member.name} ({member.id}) | SENIOR FDR EXEMPT\n")
+                    if delegate:
+                        if delegate_role not in member.roles:
+                            log.write(f"{member.name} ({member.id}) | DELEGATE ROLE ADDED\n")
+                    else:
+                        if (
+                                delegate_role in member.roles
+                                and senior not in member.roles
+                        ):
+                            log.write(f"{member.name} ({member.id}) | DELEGATE ROLE REMOVED\n")
+                        if (
+                                delegate_role in member.roles
+                                and senior in member.roles
+                        ):
+                            log.write(f"{member.name} ({member.id}) | SENIOR DEL EXEMPT\n")
+                    await console.send(
+                        f"Updated {member.name} | ID: ({member.id}) STATUS "
+                        f"({'FOUNDER' if founder else 'NONFOUNDER'}) ({'DELEGATE' if delegate else 'NONDELEGATE'})"
+                    )
+        log.close()
+        await console.send("Done with NSL update.", file=discord.File("nsl_update.log"))
+        print("Done with NSL update.")
+
+
 async def setup(bot):
     await bot.add_cog(developer(bot))
