@@ -185,6 +185,38 @@ class developer(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def nsl_update(self, ctx):
+        now_ts = datetime.datetime.now()
+        # Download the region dump
+        # noinspection DuplicatedCode
+        async with self.bot.session.get(
+            "https://www.nationstates.net/pages/regions.xml.gz"
+        ) as resp:
+            if resp.status != 200:
+                print("Could not download region dump!")
+                return
+            with open("regions.xml.gz", "wb") as f:
+                f.write(await resp.read())
+        # Unzip the file
+        with gzip.open("regions.xml.gz", "rb") as f_in:
+            # Read the file into etree
+            tree = await asyncio.to_thread(self.parse, f_in)
+        # Get the root element
+        root = tree.getroot()
+        for region in root.findall("REGION"):
+            name = region.find("NAME").text
+            founder = region.find("FOUNDER").text
+            delegate = region.find("DELEGATE").text
+            delegatevotes = region.find("DELEGATEVOTES").text
+            numnations = region.find("NUMNATIONS").text
+            await self.bot.execute(
+                "INSERT INTO nsl_region_table (region, founder, wa_delegate, delegatevotes, numnations, inserted_at) VALUES ($1, $2, $3, $4, $5, $6)",
+                name,
+                founder,
+                delegate,
+                delegatevotes,
+                numnations,
+                now_ts,
+            )
         log = open("nsl_update.log", "a")
         nsl = self.bot.get_guild(414822188273762306)
         console = nsl.get_channel(626654671167160320)
@@ -217,7 +249,7 @@ class developer(commands.Cog):
                     delegate = False
                     for record in mem:
                         vals = await self.bot.fetch(
-                            "SELECT * FROM nsl_region_dump WHERE founder OR wa_delegate = $1 ORDER BY inserted_at DESC LIMIT 1",
+                            "SELECT * FROM nsl_region_table WHERE founder OR wa_delegate = $1 ORDER BY inserted_at DESC LIMIT 1",
                             record["nation"],
                         )
                         if vals[0]["founder"] == record["nation"]:
