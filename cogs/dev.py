@@ -252,6 +252,8 @@ class developer(commands.Cog):
                             "SELECT * FROM nsl_region_table WHERE founder = $1 OR wa_delegate = $1 ORDER BY inserted_at DESC LIMIT 1",
                             record["nation"],
                         )
+                        if not vals:
+                            continue
                         if vals[0]["founder"] == record["nation"]:
                             founder = True
                         if vals[0]["wa_delegate"] == record["nation"]:
