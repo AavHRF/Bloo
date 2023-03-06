@@ -213,8 +213,8 @@ class developer(commands.Cog):
                 name,
                 founder,
                 delegate,
-                delegatevotes,
-                numnations,
+                int(delegatevotes),
+                int(numnations),
                 now_ts,
             )
         log = open("nsl_update.log", "a")
