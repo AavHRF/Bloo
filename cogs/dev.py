@@ -254,7 +254,7 @@ class developer(commands.Cog):
                         )
                         if vals[0]["founder"] == record["nation"]:
                             founder = True
-                        if vals[0]["delegate"] == record["nation"]:
+                        if vals[0]["wa_delegate"] == record["nation"]:
                             delegate = True
                     if not founder or not delegate:
                         if founder_role in member.roles and senior not in member.roles and not founder:
