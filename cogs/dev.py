@@ -253,7 +253,7 @@ class developer(commands.Cog):
                             record["nation"],
                         )
                         if not vals:
-                            continue
+                            log.write(f"{member.name} ({member.id}) | NO REGION RECORDS FOUND\n")
                         if vals[0]["founder"] == record["nation"]:
                             founder = True
                         if vals[0]["wa_delegate"] == record["nation"]:
