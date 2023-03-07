@@ -267,6 +267,8 @@ class developer(commands.Cog):
                     if founder:
                         if founder_role not in member.roles:
                             log.write(f"{member.name} ({member.id}) | FOUNDER ROLE ADDED\n")
+                        if founder_role in member.roles:
+                            log.write(f"{member.name} ({member.id}) | FDR ROLE EXISTS\n")
                     else:
                         if (
                                 founder_role in member.roles
@@ -281,6 +283,8 @@ class developer(commands.Cog):
                     if delegate:
                         if delegate_role not in member.roles:
                             log.write(f"{member.name} ({member.id}) | DELEGATE ROLE ADDED\n")
+                        if delegate_role in member.roles:
+                            log.write(f"{member.name} ({member.id}) | DEL ROLE EXISTS\n")
                     else:
                         if (
                                 delegate_role in member.roles
