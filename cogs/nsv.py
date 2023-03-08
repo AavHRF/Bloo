@@ -238,7 +238,19 @@ class NSV(commands.Cog):
             except asyncio.TimeoutError:
                 await ctx.send("Timed out.")
                 return
-            await self.auth_flow(ctx, str(msg.clean_content).lower().replace(" ", "_"))
+            try:
+                await self.auth_flow(ctx, str(msg.clean_content).lower().replace(" ", "_"))
+            except discord.Forbidden:
+                await ctx.send("I can't DM you! Please make sure that your DMs are open. Failing to do so will result "
+                               "in the process erroring out.")
+
+    @verify.error
+    async def verify_error(self, ctx: commands.Context, error: Exception):
+        if isinstance(error, commands.CommandOnCooldown):
+            await ctx.send("You're on cooldown! Please wait 60 seconds before trying again.")
+        else:
+            raise error
+
 
     @commands.guild_only()
     @commands.hybrid_command(with_app_command=True)
