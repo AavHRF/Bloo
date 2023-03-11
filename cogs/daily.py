@@ -170,7 +170,7 @@ class DailyUpdate(commands.Cog):
         print("Starting NSL update...")
         # Download the region dump
         async with self.bot.session.get(
-            "https://www.nationstates.net/pages/regions.xml.gz"
+                "https://www.nationstates.net/pages/regions.xml.gz"
         ) as resp:
             if resp.status != 200:
                 print("Could not download region dump!")
@@ -190,81 +190,120 @@ class DailyUpdate(commands.Cog):
             delegatevotes = region.find("DELEGATEVOTES").text
             numnations = region.find("NUMNATIONS").text
             await self.bot.execute(
-                "INSERT INTO nsl_region_dump (region, founder, wa_delegate, delegatevotes, numnations, inserted_at) VALUES ($1, $2, $3, $4, $5, $6)",
+                "INSERT INTO nsl_region_table (region, founder, wa_delegate, delegatevotes, numnations, inserted_at) VALUES ($1, $2, $3, $4, $5, $6)",
                 name,
                 founder,
                 delegate,
-                delegatevotes,
-                numnations,
+                int(delegatevotes),
+                int(numnations),
                 now_ts,
             )
-        print("Finished updating NSL region dump.")
-        print("Updating server roles...")
-        nsl_update = False  # Temporary guard to prevent NSL update from running while people verify
-        if nsl_update:
-            nsl = self.bot.get_guild(414822188273762306)
-            console = nsl.get_channel(626654671167160320)
-            founder_role = nsl.get_role(414822833873747984)
-            delegate_role = nsl.get_role(622961669634785302)
-            senior = nsl.get_role(
-                414871607736008715
-            )  # Seniors are immune to losing their roles
-            await nsl.chunk()  # Ensure that NSL is in the cache so that we can update the members properly
-            for member in nsl.members:
-                if member.bot:
-                    continue
+        log = open("nsl_update.log", "a")
+        nsl = self.bot.get_guild(414822188273762306)
+        console = nsl.get_channel(626654671167160320)
+        founder_role = nsl.get_role(414822833873747984)
+        delegate_role = nsl.get_role(622961669634785302)
+        senior = nsl.get_role(
+            414871607736008715
+        )  # Seniors are immune to losing their roles
+        await nsl.chunk()  # Ensure that NSL is in the cache so that we can update the members properly
+        for member in nsl.members:
+            if member.bot:
+                continue
+            else:
+                mem = await self.bot.fetch(
+                    "SELECT nation FROM nsl_table WHERE discord_id = $1", member.id
+                )
+                if not mem:
+                    # Gotta be verified to have roles! Unless you're a senior... then you're exempt. That's a
+                    # sekrit tho.
+                    if founder_role in member.roles and senior not in member.roles:
+                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | FOUNDER ROLE REMOVED\n")
+                        await member.remove_roles(founder_role)
+                    if delegate_role in member.roles and senior not in member.roles:
+                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | DELEGATE ROLE REMOVED\n")
+                        await member.remove_roles(delegate_role)
+                    if founder_role in member.roles and senior in member.roles:
+                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | SENIOR FDR EXEMPT\n")
+                    if delegate_role in member.roles and senior in member.roles:
+                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | SENIOR DEL EXEMPT\n")
                 else:
-                    mem = await self.bot.fetch(
-                        "SELECT nation FROM nsl_table WHERE discord_id = $1", member.id
-                    )
-                    if not mem:
-                        # Gotta be verified to have roles! Unless you're a senior... then you're exempt. That's a
-                        # sekrit tho.
-                        if founder_role in member.roles and senior not in member.roles:
-                            await member.remove_roles(founder_role)
-                        if delegate_role in member.roles and senior not in member.roles:
-                            await member.remove_roles(delegate_role)
-                    else:
-                        founder = False
-                        delegate = False
-                        for record in mem:
-                            vals = await self.bot.fetch(
-                                "SELECT * FROM nsl_region_dump WHERE founder OR wa_delegate = $1 ORDER BY inserted_at DESC LIMIT 1",
-                                record["nation"],
-                            )
-                            if vals[0]["founder"] == nation:
-                                founder = True
-                            if vals[0]["delegate"] == nation:
-                                delegate = True
-                        if not founder or not delegate:
-                            if founder_role in member.roles and senior not in member.roles and not founder:
-                                await member.remove_roles(founder_role)
-                            if delegate_role in member.roles and senior not in member.roles and not delegate:
-                                await member.remove_roles(delegate_role)
+                    founder = False
+                    delegate = False
+                    for record in mem:
+                        vals = await self.bot.fetch(
+                            "SELECT * FROM nsl_region_table WHERE founder = $1 OR wa_delegate = $1 ORDER BY inserted_at DESC LIMIT 1",
+                            record["nation"],
+                        )
+                        if not vals:
+                            log.write(f"{member.name} ({member.id}) | NO REGION RECORDS FOUND\n")
+                            if senior not in member.roles:
+                                if founder_role in member.roles:
+                                    log.write(f"{member.name} ({member.id}) | FOUNDER ROLE REMOVED\n")
+                                    await member.remove_roles(founder_role)
+                                if delegate_role in member.roles:
+                                    log.write(f"{member.name} ({member.id}) | DELEGATE ROLE REMOVED\n")
+                                    await member.remove_roles(delegate_role)
                             continue
-                        if founder:
-                            if founder_role not in member.roles:
-                                await member.add_roles(founder_role)
-                        else:
-                            if (
+                        if vals[0]["founder"] == record["nation"]:
+                            founder = True
+                        if vals[0]["wa_delegate"] == record["nation"]:
+                            delegate = True
+                    if not founder or not delegate:
+                        if founder_role in member.roles and senior not in member.roles and not founder:
+                            log.write(f"{member.name} ({member.id}) | FOUNDER ROLE REMOVED\n")
+                            await member.remove_roles(founder_role)
+                        if delegate_role in member.roles and senior not in member.roles and not delegate:
+                            log.write(f"{member.name} ({member.id}) | DELEGATE ROLE REMOVED\n")
+                            await member.remove_roles(delegate_role)
+                        continue
+                    if founder:
+                        if founder_role not in member.roles:
+                            log.write(f"{member.name} ({member.id}) | FOUNDER ROLE ADDED\n")
+                            await member.add_roles(founder_role)
+                        if founder_role in member.roles:
+                            log.write(f"{member.name} ({member.id}) | FDR ROLE EXISTS\n")
+                    else:
+                        if (
                                 founder_role in member.roles
                                 and senior not in member.roles
-                            ):
-                                await member.remove_roles(founder_role)
-                        if delegate:
-                            if delegate_role not in member.roles:
-                                await member.add_roles(delegate_role)
-                        else:
-                            if (
+                        ):
+                            log.write(f"{member.name} ({member.id}) | FOUNDER ROLE REMOVED\n")
+                            await member.remove_roles(founder_role)
+                        if (
+                                founder_role in member.roles
+                                and senior in member.roles
+                        ):
+                            log.write(f"{member.name} ({member.id}) | SENIOR FDR EXEMPT\n")
+                    if delegate:
+                        if delegate_role not in member.roles:
+                            log.write(f"{member.name} ({member.id}) | DELEGATE ROLE ADDED\n")
+                            await member.add_roles(delegate_role)
+                        if delegate_role in member.roles:
+                            log.write(f"{member.name} ({member.id}) | DEL ROLE EXISTS\n")
+                    else:
+                        if (
                                 delegate_role in member.roles
                                 and senior not in member.roles
-                            ):
-                                await member.remove_roles(delegate_role)
-                        await console.send(
-                            f"Updated {member.name} | ID: ({member.id}) STATUS "
-                            f"({'FOUNDER' if founder else 'NONFOUNDER'}) ({'DELEGATE' if delegate else 'NONDELEGATE'})"
-                            )
-            print("Done with NSL update.")
+                        ):
+                            log.write(f"{member.name} ({member.id}) | DELEGATE ROLE REMOVED\n")
+                            await member.remove_roles(delegate_role)
+                        if (
+                                delegate_role in member.roles
+                                and senior in member.roles
+                        ):
+                            log.write(f"{member.name} ({member.id}) | SENIOR DEL EXEMPT\n")
+                    await console.send(
+                        f"Updated {member.name} | ID: ({member.id}) STATUS "
+                        f"({'FOUNDER' if founder else 'NONFOUNDER'}) ({'DELEGATE' if delegate else 'NONDELEGATE'})"
+                    )
+                    log.write(
+                        f"Updated {member.name} | ID: ({member.id}) STATUS "
+                        f"({'FOUNDER' if founder else 'NONFOUNDER'}) ({'DELEGATE' if delegate else 'NONDELEGATE'})"
+                    )
+        log.close()
+        await console.send("Done with NSL update.", file=discord.File("nsl_update.log"))
+        print("Done with NSL update.")
 
     @daily_update.before_loop
     async def before_daily_update(self):
