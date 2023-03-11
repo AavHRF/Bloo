@@ -17,6 +17,8 @@ class Listeners(commands.Cog):
         )
         if not guildbans:
             pass
+        if not settings:
+            return
         else:
             owned = await self.bot.fetch(
                 "SELECT * FROM nsv_table WHERE discord_id = $1", member.id
@@ -28,6 +30,8 @@ class Listeners(commands.Cog):
                     for ban in guildbans:
                         if nation["nation"] == ban["nation"]:
                             await member.guild.ban(member, reason=ban["reason"])
+                            if not settings[0]["welcome_channel"]:
+                                return
                             embed = discord.Embed(
                                 title="Member joined with banned nation.",
                                 description=f"User {member.mention} ({member.id}) joined with a nation ({nation['nation']})that is banned from this server.",
@@ -37,8 +41,7 @@ class Listeners(commands.Cog):
                                 settings[0]["welcome_channel"]
                             ).send(embed=embed)
                             return
-
-        if not settings:
+        if not settings[0]["welcome_channel"]:
             return
         embed = discord.Embed(
             title=f"Welcome to {member.guild.name}, {member.display_name}!",
@@ -65,7 +68,7 @@ class Listeners(commands.Cog):
         settings = await self.bot.fetch(
             "SELECT * FROM welcome_settings WHERE guild_id = $1", member.guild.id
         )
-        if not settings:
+        if not settings[0]["welcome_channel"]:
             return
         embed = discord.Embed(
             title=f"Goodbye, {member.display_name}!",
