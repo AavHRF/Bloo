@@ -236,14 +236,7 @@ class DailyUpdate(commands.Cog):
                             record["nation"],
                         )
                         if not vals:
-                            log.write(f"{member.name} ({member.id}) | NO REGION RECORDS FOUND\n")
-                            if senior not in member.roles:
-                                if founder_role in member.roles:
-                                    log.write(f"{member.name} ({member.id}) | FOUNDER ROLE REMOVED\n")
-                                    await member.remove_roles(founder_role)
-                                if delegate_role in member.roles:
-                                    log.write(f"{member.name} ({member.id}) | DELEGATE ROLE REMOVED\n")
-                                    await member.remove_roles(delegate_role)
+                            log.write(f"{member.name} ({member.id}) NATION: {record['nation']}| NO REGION RECORDS FOUND\n")
                             continue
                         if vals[0]["founder"] == record["nation"]:
                             founder = True
