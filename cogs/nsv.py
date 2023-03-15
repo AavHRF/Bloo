@@ -7,6 +7,40 @@ from xml.etree import ElementTree
 from framework.bot import Bloo
 
 
+class DropSelect(discord.ui.Select):
+
+    def __init__(self, bot: Bloo, natlist: list, message: discord.Message):
+        super().__init__(placeholder="Select a nation")
+        self.bot = bot
+        self.natlist = natlist
+        self.message = message
+        for nation in natlist[:24]:
+            self.add_option(label=nation.replace('_', ' ').title(), value=nation)
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        await self.bot.execute(
+            "DELETE FROM nsl_table WHERE discord_id = $1 AND nation = $2",
+            interaction.user.id,
+            self.values[0],
+        )
+        self.view.stop()
+        self.disabled = True
+        await self.message.edit(view=self.view)
+        await interaction.followup.send(
+            f"Removed {self.values[0].replace('_', ' ').title()} from your list of nations.",
+            ephemeral=True,
+        )
+
+
+class DropView(discord.ui.View):
+
+    def __init__(self, bot: Bloo, natlist: list, message: discord.Message):
+        super().__init__()
+        self.add_item(DropSelect(bot, natlist, message))
+
+
+
 class NSV(commands.Cog):
     def __init__(self, bot: Bloo):
         self.bot = bot
@@ -258,6 +292,19 @@ class NSV(commands.Cog):
         """
         Drops your nation for the server.
         """
+        if ctx.guild.id == 414822188273762306:
+            listof = await self.bot.fetch("SELECT nation FROM nsl_table WHERE discord_id = $1", ctx.author.id)
+            if listof:
+                nlist = [record["nation"] for record in listof]
+                embed = discord.Embed(
+                    title="Which nation would you like to drop?",
+                    description="Only the first twenty-five nations that you have verified are shown.",
+                    color=discord.Color.blurple(),
+                )
+                m = await ctx.send(embed=embed)
+                v = DropView(self.bot, nlist, m)
+                await m.edit(view=v)
+
         await self.bot.execute(
             "DELETE FROM nsv_table WHERE discord_id = $1 AND guild_id = $2",
             ctx.author.id,
