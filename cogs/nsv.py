@@ -301,7 +301,7 @@ class NSV(commands.Cog):
                     description="Only the first twenty-five nations that you have verified are shown.",
                     color=discord.Color.blurple(),
                 )
-                m = await ctx.send(embed=embed)
+                m = await ctx.send(embed=embed, ephemeral=True)
                 v = DropView(self.bot, nlist, m)
                 await m.edit(view=v)
         else:
