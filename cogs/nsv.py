@@ -40,7 +40,6 @@ class DropView(discord.ui.View):
         self.add_item(DropSelect(bot, natlist, message))
 
 
-
 class NSV(commands.Cog):
     def __init__(self, bot: Bloo):
         self.bot = bot
@@ -86,12 +85,12 @@ class NSV(commands.Cog):
             "Copy the code from that page and paste it here. **__This code does not give anyone access to your "
             "nation, any form of control over it, etc. It ONLY allows verification of ownership.__**"
         )
-        await ctx.send("Check your DMs!")
+        await ctx.send("Check your DMs!", ephemeral=True)
         try:
             msg: discord.Message = await self.bot.wait_for(
                 "message",
                 check=lambda m: m.author == ctx.author
-                and m.channel == ctx.author.dm_channel,
+                                and m.channel == ctx.author.dm_channel,
                 timeout=180,
             )
         except asyncio.TimeoutError:
@@ -255,6 +254,7 @@ class NSV(commands.Cog):
         """
         Verify your nation
         """
+        await ctx.defer(ephemeral=True)
         if nation is not None:
             await self.auth_flow(ctx, nation.lower().replace(" ", "_"))
         else:
@@ -266,7 +266,7 @@ class NSV(commands.Cog):
                 msg: discord.Message = await self.bot.wait_for(
                     "message",
                     check=lambda m: m.author == ctx.author
-                    and m.channel == ctx.author.dm_channel,
+                                    and m.channel == ctx.author.dm_channel,
                     timeout=60,
                 )
             except asyncio.TimeoutError:
@@ -284,7 +284,6 @@ class NSV(commands.Cog):
             await ctx.send("You're on cooldown! Please wait 60 seconds before trying again.")
         else:
             raise error
-
 
     @commands.guild_only()
     @commands.hybrid_command(with_app_command=True)
