@@ -304,13 +304,13 @@ class NSV(commands.Cog):
                 m = await ctx.send(embed=embed)
                 v = DropView(self.bot, nlist, m)
                 await m.edit(view=v)
-
-        await self.bot.execute(
-            "DELETE FROM nsv_table WHERE discord_id = $1 AND guild_id = $2",
-            ctx.author.id,
-            ctx.guild.id,
-        )
-        await ctx.send("Done.")
+        else:
+            await self.bot.execute(
+                "DELETE FROM nsv_table WHERE discord_id = $1 AND guild_id = $2",
+                ctx.author.id,
+                ctx.guild.id,
+            )
+            await ctx.send("Done.")
 
 
 async def setup(bot: Bloo):
