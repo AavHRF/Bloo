@@ -81,7 +81,7 @@ class Utility(commands.Cog):
     async def cog_app_command_error(
             self, interaction: discord.Interaction, error: app_commands.AppCommandError
     ) -> None:
-        if isinstance(error, commands.CommandOnCooldown):
+        if isinstance(error, app_commands.CommandOnCooldown):
             await interaction.response.send_message(
                 f"This command is on cooldown. Please try again in {error.retry_after:.2f} seconds.",
                 ephemeral=True,
