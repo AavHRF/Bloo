@@ -65,3 +65,11 @@ CREATE TABLE IF NOT EXISTS nsl_region_table (
     numnations INTEGER,
     inserted_at TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS tickets (
+    ticketcount BIGSERIAL,
+    user_id BIGINT NOT NULL,
+    response_id VARCHAR(50) NOT NULL,
+    filed_at TIMESTAMP NOT NULL,
+    PRIMARY KEY (ticketcount)
+);

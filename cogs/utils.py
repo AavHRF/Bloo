@@ -315,7 +315,7 @@ class Utility(commands.Cog):
     async def ticket(
         self,
         interaction: discord.Interaction,
-        category: Literal["bug", "suggestion", "other"],
+        category: Literal["bug", "feature request", "other"],
         description: str,
         image: Optional[discord.Attachment],
     ):
@@ -323,7 +323,7 @@ class Utility(commands.Cog):
         tags = ticketchannel.available_tags
         tickettag = None
         for tag in tags:
-            if tag.name == category:
+            if tag.name.lower() == category:
                 tickettag = tag
                 break
         ticket = await ticketchannel.create_thread(
