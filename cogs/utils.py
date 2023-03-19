@@ -1,4 +1,6 @@
 import discord
+import datetime
+import uuid
 from discord.ext import commands
 from discord import app_commands
 from framework.bot import Bloo
@@ -7,7 +9,6 @@ from xml.etree import ElementTree
 
 
 class ReasonModal(discord.ui.Modal, title="Reason for ban"):
-
     def __init__(self, nation: str):
         super().__init__()
         self.nation = nation
@@ -32,8 +33,9 @@ class ReasonModal(discord.ui.Modal, title="Reason for ban"):
 
 
 class ModView(discord.ui.View):
-
-    def __init__(self, bot: Bloo, nation: str, member: discord.Member, banned: bool = False):
+    def __init__(
+        self, bot: Bloo, nation: str, member: discord.Member, banned: bool = False
+    ):
         super().__init__()
         self.bot = bot
         self.nation = nation
@@ -50,7 +52,9 @@ class ModView(discord.ui.View):
     @discord.ui.button(label="Unban", style=discord.ButtonStyle.green, row=0)
     async def unban(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not self.banned:
-            return await interaction.response.send_message("This nation is not banned!", ephemeral=True)
+            return await interaction.response.send_message(
+                "This nation is not banned!", ephemeral=True
+            )
         else:
             await self.bot.execute(
                 "DELETE FROM nsv_ban_table WHERE nation = $1 AND guild_id = $2",
@@ -63,7 +67,9 @@ class ModView(discord.ui.View):
     @discord.ui.button(label="Ban", style=discord.ButtonStyle.red, row=0)
     async def ban(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.banned:
-            return await interaction.response.send_message("This nation is already banned!", ephemeral=True)
+            return await interaction.response.send_message(
+                "This nation is already banned!", ephemeral=True
+            )
         else:
             await interaction.response.send_modal(ReasonModal(self.nation))
 
@@ -72,14 +78,25 @@ class Utility(commands.Cog):
     def __init__(self, bot: Bloo):
         self.bot = bot
 
+    async def cog_app_command_error(
+            self, interaction: discord.Interaction, error: app_commands.AppCommandError
+    ) -> None:
+        if isinstance(error, commands.CommandOnCooldown):
+            await interaction.response.send_message(
+                f"This command is on cooldown. Please try again in {error.retry_after:.2f} seconds.",
+                ephemeral=True,
+            )
+        else:
+            raise error
+
     @app_commands.command(name="post", description="Post a message to a channel")
     @app_commands.default_permissions(manage_messages=True)
     async def post(
-            self,
-            interaction: discord.Interaction,
-            channel: discord.TextChannel,
-            message: str,
-            edit: Optional[str] = None,
+        self,
+        interaction: discord.Interaction,
+        channel: discord.TextChannel,
+        message: str,
+        edit: Optional[str] = None,
     ):
         await interaction.response.defer(ephemeral=True)
         if not edit:
@@ -98,15 +115,17 @@ class Utility(commands.Cog):
         if not member:
             member = ctx.author
         if ctx.guild.id != 414822188273762306:
-            nation = await self.bot.fetch(
+            nations = await self.bot.fetch(
                 "SELECT nation FROM nsv_table WHERE discord_id = $1 AND guild_id = $2",
                 member.id,
                 ctx.guild.id,
             )
-            if not nation:
+            if not nations:
                 nation = "None set"
             else:
-                nation = nation[0]["nation"]
+                nation = ", ".join(
+                    [i["nation"].replace("_", " ").title() for i in nations]
+                )
         else:
             nations = await self.bot.fetch(
                 "SELECT nation FROM nsl_table WHERE discord_id = $1",
@@ -115,14 +134,16 @@ class Utility(commands.Cog):
             if not nations:
                 nation = "None set"
             else:
-                nation = ", ".join([i["nation"].replace("_", " ").title() for i in nations])
+                nation = ", ".join(
+                    [i["nation"].replace("_", " ").title() for i in nations]
+                )
 
         embed = discord.Embed(
             title=f"Information for {member.display_name}",
             color=discord.Color.random(),
         )
         embed.add_field(
-            name="Nation",
+            name="Nation(s)",
             value=nation.replace("_", " ").title(),
         )
         embed.add_field(
@@ -161,11 +182,11 @@ class Utility(commands.Cog):
     )
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.guild_id, i.user.id))
     async def lookup(
-            self,
-            interaction: discord.Interaction,
-            which: Literal["nation", "region"],
-            name: str,
-            show: Literal["me", "channel"],
+        self,
+        interaction: discord.Interaction,
+        which: Literal["nation", "region"],
+        name: str,
+        show: Literal["me", "channel"],
     ):
         if show == "me":
             await interaction.response.defer(ephemeral=True)
@@ -186,13 +207,12 @@ class Utility(commands.Cog):
                 await interaction.followup.send(
                     f"Could not find that nation. Try [checking the boneyard.]("
                     f"https://www.nationstates.net/page=boneyard?nation={name.lower().replace(' ', '_')})",
-                    ephemeral=True
+                    ephemeral=True,
                 )
                 return
             else:
                 await interaction.followup.send(
-                    f"That region does not appear to exist.",
-                    ephemeral=True
+                    f"That region does not appear to exist.", ephemeral=True
                 )
                 return
         elif response.status != 200:
@@ -205,40 +225,41 @@ class Utility(commands.Cog):
             embed = discord.Embed(
                 title=tree.find("FULLNAME").text,
                 url=f"https://www.nationstates.net/nation={name.lower().replace(' ', '_')}",
-                description=f"*{tree.find('MOTTO').text}*"
+                description=f"*{tree.find('MOTTO').text}*",
             )
             if not tree.find("FLAG").text.endswith(".svg"):
                 embed.set_thumbnail(url=tree.find("FLAG").text)
             embed.add_field(
                 name="Region",
-                value=f"[{tree.find('REGION').text}](https://nationstates.net/region={tree.find('REGION').text.lower().replace(' ', '_')})"
+                value=f"[{tree.find('REGION').text}](https://nationstates.net/region={tree.find('REGION').text.lower().replace(' ', '_')})",
             )
+            embed.add_field(name="World Assembly", value=tree.find("UNSTATUS").text)
             embed.add_field(
-                name="World Assembly",
-                value=tree.find("UNSTATUS").text
+                name="Founded", value=f"<t:{int(tree.find('FIRSTLOGIN').text)}>"
             )
-            embed.add_field(
-                name="Founded",
-                value=f"<t:{int(tree.find('FIRSTLOGIN').text)}>"
-            )
-            embed.set_footer(
-                text=f"Last activity was {tree.find('LASTACTIVITY').text}"
-            )
+            embed.set_footer(text=f"Last activity was {tree.find('LASTACTIVITY').text}")
             if interaction.user.guild_permissions.ban_members:
                 if show == "me":
                     modcheck = await self.bot.fetch(
                         "SELECT * FROM nsv_ban_table WHERE nation = $1 AND guild_id = $2",
-                        name.lower().replace(' ', '_'),
+                        name.lower().replace(" ", "_"),
                         interaction.guild.id,
                     )
                     if modcheck:
                         reason = modcheck[0]["reason"]
                         embed.description += "```ansi\n\u001b[1;31m**BANNED**\u001b[0m"
-                        embed.description += f"\n\u001b[1;31mReason:\u001b[0m\n{reason}```"
+                        embed.description += (
+                            f"\n\u001b[1;31mReason:\u001b[0m\n{reason}```"
+                        )
                     await interaction.followup.send(
                         embed=embed,
                         ephemeral=True,
-                        view=ModView(self.bot, name.lower().replace(' ', '_'), interaction.user, bool(modcheck))
+                        view=ModView(
+                            self.bot,
+                            name.lower().replace(" ", "_"),
+                            interaction.user,
+                            bool(modcheck),
+                        ),
                     )
                 else:
                     await interaction.followup.send(embed=embed, ephemeral=True)
@@ -250,35 +271,104 @@ class Utility(commands.Cog):
                 title=tree.find("NAME").text,
                 url=f"https://www.nationstates.net/region={name.lower().replace(' ', '_')}",
             )
-            embed.add_field(
-                name="Population",
-                value=tree.find("NUMNATIONS").text
-            )
+            embed.add_field(name="Population", value=tree.find("NUMNATIONS").text)
             f = tree.find("FOUNDER").text
             embed.add_field(
                 name="Founder",
-                value=f"[{f.title().replace('_', ' ')}](https://nationstates.net/nation={f})" if f != "0" else "None"
+                value=f"[{f.title().replace('_', ' ')}](https://nationstates.net/nation={f})"
+                if f != "0"
+                else "None",
             )
             w = tree.find("DELEGATE").text
             embed.add_field(
                 name="WA Delegate",
-                value=f"[{w.title().replace('_', ' ')}](https://nationstates.net/nation={w})" if w != "0" else "None"
+                value=f"[{w.title().replace('_', ' ')}](https://nationstates.net/nation={w})"
+                if w != "0"
+                else "None",
             )
             embed.add_field(
                 name="Founder Authority",
-                value="Executive" if "X" in tree.find("FOUNDERAUTH").text else "Non-Executive"
+                value="Executive"
+                if "X" in tree.find("FOUNDERAUTH").text
+                else "Non-Executive",
             )
             embed.add_field(
                 name="Delegate Authority",
-                value="Executive" if "X" in tree.find("DELEGATEAUTH").text else "Non-Executive"
+                value="Executive"
+                if "X" in tree.find("DELEGATEAUTH").text
+                else "Non-Executive",
             )
             embed.add_field(
-                name="Delegate Votes",
-                value=tree.find("DELEGATEVOTES").text
+                name="Delegate Votes", value=tree.find("DELEGATEVOTES").text
             )
             embed.set_thumbnail(url=tree.find("FLAG").text)
-            embed.set_image(url=f"https://nationstates.net{tree.find('BANNERURL').text}")
+            embed.set_image(
+                url=f"https://nationstates.net{tree.find('BANNERURL').text}"
+            )
             await interaction.followup.send(embed=embed, ephemeral=True)
+
+    @app_commands.command(
+        name="ticket",
+        description="Creates a ticket for support.",
+    )
+    @app_commands.checks.cooldown(1, 10.0, key=lambda i: i.user.id)
+    async def ticket(
+        self,
+        interaction: discord.Interaction,
+        category: Literal["bug", "suggestion", "other"],
+        description: str,
+        image: Optional[discord.Attachment],
+    ):
+        ticketchannel: discord.ForumChannel = self.bot.get_channel(1086813742823637062)
+        tags = ticketchannel.available_tags
+        tickettag = None
+        for tag in tags:
+            if tag.name == category:
+                tickettag = tag
+                break
+        ticket = await ticketchannel.create_thread(
+            name=f"{interaction.user.name}#{interaction.user.discriminator}",
+            auto_archive_duration=10080,
+            allowed_mentions=discord.AllowedMentions.none(),
+            reason=f"Ticket created by {interaction.user} ({interaction.user.id})",
+            file=await image.to_file() if image else None,
+            applied_tags=[tickettag],
+        )
+        ticket_id = str(uuid.uuid4())
+        await self.bot.execute(
+            "INSERT INTO tickets (user_id, response_id, filed_at) VALUES ($1, $2, $3)",
+            interaction.user.id,
+            ticket_id,
+            datetime.datetime.utcnow(),
+        )
+        await interaction.response.send_message(
+            f"Your ticket has been filed. Your ticket ID is `{ticket_id}`. Please provide this as a reference to the "
+            f"developer if they ask for follow-up information.",
+            ephemeral=True,
+        )
+        await ticket.thread.send(
+            f"**Ticket filed by {interaction.user} ({interaction.user.id})**\n Ticket ID: `{ticket_id}`"
+        )
+
+    @commands.command()
+    @commands.is_owner()
+    async def respond(self, ctx: commands.Context, ticket_id: str, *, response: str):
+        ticket = await self.bot.fetch(
+            "SELECT * FROM tickets WHERE response_id = $1", ticket_id
+        )
+        if not ticket:
+            return await ctx.send("That ticket does not exist.")
+        user = self.bot.get_user(ticket[0]["user_id"])
+        if not user:
+            return await ctx.send("That user does not exist.")
+        embed = discord.Embed(
+            title="Ticket Response",
+            description=response,
+            color=discord.Color.green(),
+        )
+        embed.set_footer(text=f"Ticket ID: {ticket_id}")
+        await user.send(embed=embed)
+        await ctx.send("Response sent.")
 
 
 async def setup(bot: Bloo):
