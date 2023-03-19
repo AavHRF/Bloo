@@ -326,14 +326,25 @@ class Utility(commands.Cog):
             if tag.name.lower() == category:
                 tickettag = tag
                 break
-        ticket = await ticketchannel.create_thread(
-            name=f"{interaction.user.name}#{interaction.user.discriminator}",
-            auto_archive_duration=10080,
-            allowed_mentions=discord.AllowedMentions.none(),
-            reason=f"Ticket created by {interaction.user} ({interaction.user.id})",
-            file=await image.to_file() if image else None,
-            applied_tags=[tickettag],
-        )
+        if image:
+            ticket = await ticketchannel.create_thread(
+                name=f"{interaction.user.name}#{interaction.user.discriminator}",
+                auto_archive_duration=10080,
+                allowed_mentions=discord.AllowedMentions.none(),
+                reason=f"Ticket created by {interaction.user} ({interaction.user.id})",
+                file=await image.to_file(),
+                applied_tags=[tickettag],
+                content=description,
+            )
+        else:
+            ticket = await ticketchannel.create_thread(
+                name=f"{interaction.user.name}#{interaction.user.discriminator}",
+                auto_archive_duration=10080,
+                allowed_mentions=discord.AllowedMentions.none(),
+                reason=f"Ticket created by {interaction.user} ({interaction.user.id})",
+                applied_tags=[tickettag],
+                content=description,
+            )
         ticket_id = str(uuid.uuid4())
         await self.bot.execute(
             "INSERT INTO tickets (user_id, response_id, filed_at) VALUES ($1, $2, $3)",
