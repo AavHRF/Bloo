@@ -316,6 +316,7 @@ class Utility(commands.Cog):
         self,
         interaction: discord.Interaction,
         category: Literal["bug", "feature request", "other"],
+        title: str,
         description: str,
         image: Optional[discord.Attachment],
     ):
@@ -328,7 +329,7 @@ class Utility(commands.Cog):
                 break
         if image:
             ticket = await ticketchannel.create_thread(
-                name=f"{interaction.user.name}#{interaction.user.discriminator}",
+                name=title,
                 auto_archive_duration=10080,
                 allowed_mentions=discord.AllowedMentions.none(),
                 reason=f"Ticket created by {interaction.user} ({interaction.user.id})",
@@ -338,7 +339,7 @@ class Utility(commands.Cog):
             )
         else:
             ticket = await ticketchannel.create_thread(
-                name=f"{interaction.user.name}#{interaction.user.discriminator}",
+                name=title,
                 auto_archive_duration=10080,
                 allowed_mentions=discord.AllowedMentions.none(),
                 reason=f"Ticket created by {interaction.user} ({interaction.user.id})",
