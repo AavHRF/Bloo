@@ -96,8 +96,7 @@ class NSV(commands.Cog):
         except asyncio.TimeoutError:
             await ctx.author.send("Timed out.")
             return
-        print("got token")
-        print(nation)
+
         if not await self.auth_call(nation, msg.content):
             await ctx.author.send("Invalid code.")
             return
@@ -137,7 +136,6 @@ class NSV(commands.Cog):
         data = await resp.text()
         root = ElementTree.fromstring(data)
         region = root.find("REGION").text.lower().replace(" ", "_")
-        print(region)
         if ctx.guild.id == 414822188273762306:
             rresp = await self.bot.ns_request(
                 {
@@ -153,8 +151,6 @@ class NSV(commands.Cog):
             rroot = ElementTree.fromstring(await rresp.text())
             rfounder = rroot.find("FOUNDER").text
             rdelegate = rroot.find("DELEGATE").text
-            print(rfounder)
-            print(rdelegate)
             founder_role = ctx.guild.get_role(414822833873747984)
             delegate_role = ctx.guild.get_role(622961669634785302)
 
@@ -186,7 +182,6 @@ class NSV(commands.Cog):
             wa = root.find("UNSTATUS").text
             status = None
             if settings[0]["region"]:
-                print("stepped inside region set")
                 if settings[0]["region"] != region:
                     status = "guest"
                 else:
@@ -195,7 +190,7 @@ class NSV(commands.Cog):
                     else:
                         status = "resident"
                 await self.bot.execute(
-                    "INSERT INTO nsv_table (discord_id, nation, guild_id, status) VALUES ($1, $2, $3, $4) ON CONFLICT (discord_id, guild_id) DO UPDATE SET nation = $2, status = $4",
+                    "INSERT INTO nsv_table (discord_id, nation, guild_id, status) VALUES ($1, $2, $3, $4)",
                     ctx.author.id,
                     nation,
                     ctx.guild.id,
@@ -233,7 +228,7 @@ class NSV(commands.Cog):
             else:
                 status = "verified"
                 await self.bot.execute(
-                    "INSERT INTO nsv_table (discord_id, nation, guild_id, status) VALUES ($1, $2, $3, $4) ON CONFLICT (discord_id, guild_id) DO UPDATE SET nation = $2, status = $4",
+                    "INSERT INTO nsv_table (discord_id, nation, guild_id, status) VALUES ($1, $2, $3, $4)",
                     ctx.author.id,
                     nation,
                     ctx.guild.id,

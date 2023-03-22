@@ -67,7 +67,7 @@ class DailyUpdate(commands.Cog):
             if not settings[0]["force_verification"]:
                 continue
             guild_members = await self.bot.fetch(
-                "SELECT discord_id, nation FROM nsv_table WHERE guild_id = $1", guild_id
+                "SELECT discord_id FROM nsv_table WHERE guild_id = $1", guild_id
             )
             print(len(guild_members))
             guest_role = guild_obj.get_role(settings[0]["guest_role"])
@@ -86,85 +86,90 @@ class DailyUpdate(commands.Cog):
             for member in guild_obj.members:
                 if member.id not in [m["discord_id"] for m in guild_members]:
                     if verified_role in member.roles and verified_role is not None:
-                        await member.remove_roles(verified_role)
+                        await member.remove_roles(verified_role, reason="No nation verified")
                     if guest_role in member.roles and guest_role is not None:
-                        await member.remove_roles(guest_role)
+                        await member.remove_roles(guest_role, reason="No nation verified")
+                    if (
+                        wa_resident_role in member.roles
+                        and wa_resident_role is not None
+                    ):
+                        await member.remove_roles(wa_resident_role, reason="No nation verified")
+                    if resident_role in member.roles and resident_role is not None:
+                        await member.remove_roles(resident_role, reason="No nation verified")
+            for member in guild_obj.members:
+                discord_id = member.id
+                status = "guest"
+                vals = await self.bot.fetch(
+                    "SELECT * FROM nsv_table WHERE discord_id = $1 AND guild_id = $2",
+                )
+                if not vals:
+                    print("No nations found, skipping...")
+                    continue
+                else:
+                    for val in vals:
+                        record = await self.bot.fetch(
+                            "SELECT * FROM nation_dump WHERE nation = $1",
+                            val["nation"],
+                        )
+                        if not record:
+                            print("Nation has CTEd, skipping...")
+                            continue
+                        else:
+                            if record[0]["region"] == settings[0]["region"]:
+                                status = "resident"
+                            if record[0]["unstatus"] == "WA Member":
+                                status = "wa-resident"
+
+                if status == "guest":
+                    if (
+                        guest_role not in member.roles
+                        and guest_role is not None
+                    ):
+                        await member.add_roles(guest_role)
                     if (
                         wa_resident_role in member.roles
                         and wa_resident_role is not None
                     ):
                         await member.remove_roles(wa_resident_role)
-                    if resident_role in member.roles and resident_role is not None:
+                    if (
+                        resident_role in member.roles
+                        and resident_role is not None
+                    ):
                         await member.remove_roles(resident_role)
-            for member in guild_members:
-                discord_id = member["discord_id"]
-                nation = member["nation"]
-                # Check if the member is still in the guild
-                member_obj = guild_obj.get_member(discord_id)
-                if member_obj is None:
-                    print(f"Could not find member for ID {discord_id}")
                 else:
-                    print(f"Checking {nation} | ID: ({discord_id})")
-                    vals = await self.bot.fetch(
-                        "SELECT region, unstatus FROM nation_dump WHERE nation = $1",
-                        nation,
-                    )
-                    if not vals:
-                        print("Nation not found, skipping...")
-                        continue
-                    if vals[0]["region"] != settings[0]["region"]:
-                        status = "guest"
+                    if status == "wa-resident":
                         if (
-                            guest_role not in member_obj.roles
+                            guest_role in member.roles
                             and guest_role is not None
                         ):
-                            await member_obj.add_roles(guest_role)
+                            await member.remove_roles(guest_role)
                         if (
-                            wa_resident_role in member_obj.roles
+                            wa_resident_role not in member.roles
                             and wa_resident_role is not None
                         ):
-                            await member_obj.remove_roles(wa_resident_role)
+                            await member.add_roles(wa_resident_role)
                         if (
-                            resident_role in member_obj.roles
+                            resident_role not in member.roles
                             and resident_role is not None
                         ):
-                            await member_obj.remove_roles(resident_role)
+                            await member.add_roles(resident_role)
                     else:
-                        if vals[0]["unstatus"] == "WA Member":
-                            status = "wa-resident"
-                            if (
-                                guest_role in member_obj.roles
-                                and guest_role is not None
-                            ):
-                                await member_obj.remove_roles(guest_role)
-                            if (
-                                wa_resident_role not in member_obj.roles
-                                and wa_resident_role is not None
-                            ):
-                                await member_obj.add_roles(wa_resident_role)
-                            if (
-                                resident_role not in member_obj.roles
-                                and resident_role is not None
-                            ):
-                                await member_obj.add_roles(resident_role)
-                        else:
-                            status = "resident"
-                            if (
-                                guest_role in member_obj.roles
-                                and guest_role is not None
-                            ):
-                                await member_obj.remove_roles(guest_role)
-                            if (
-                                resident_role not in member_obj.roles
-                                and resident_role is not None
-                            ):
-                                await member_obj.add_roles(resident_role)
-                    await self.bot.execute(
-                        "UPDATE nsv_table SET status = $1 WHERE discord_id = $2 AND guild_id = $3",
-                        status,
-                        discord_id,
-                        guild_id,
-                    )
+                        if (
+                            guest_role in member.roles
+                            and guest_role is not None
+                        ):
+                            await member.remove_roles(guest_role)
+                        if (
+                            resident_role not in member.roles
+                            and resident_role is not None
+                        ):
+                            await member.add_roles(resident_role)
+                await self.bot.execute(
+                    "UPDATE nsv_table SET status = $1 WHERE discord_id = $2 AND guild_id = $3",
+                    status,
+                    discord_id,
+                    guild_id,
+                )
             print(f"Updated {guild_obj.name} | ID: ({guild_id})")
         print("Finished daily update.")
         print("Starting NSL update...")

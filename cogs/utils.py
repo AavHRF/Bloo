@@ -106,6 +106,17 @@ class Utility(commands.Cog):
             await msg.edit(content=message)
         await interaction.followup.send("Message sent!", ephemeral=True)
 
+    @app_commands.command(name="dm", description="Directly message a member from the bot.")
+    @app_commands.default_permissions(kick_members=True)
+    async def dm(self, interaction: discord.Interaction, member: discord.Member, sign: bool, message: str):
+        await interaction.response.defer(ephemeral=True)
+        if not sign:
+            await member.send(message)
+        else:
+            await member.send(f"{message}\n*Sent by {interaction.user.name}#{interaction.user.discriminator}*")
+
+        await interaction.followup.send("Message sent!", ephemeral=True)
+
     @commands.guild_only()
     @commands.hybrid_command(with_app_command=True)
     async def info(self, ctx: commands.Context, member: discord.Member = None):
