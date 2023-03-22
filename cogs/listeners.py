@@ -68,6 +68,8 @@ class Listeners(commands.Cog):
         settings = await self.bot.fetch(
             "SELECT * FROM welcome_settings WHERE guild_id = $1", member.guild.id
         )
+        if not settings:
+            return
         if not settings[0]["welcome_channel"]:
             return
         embed = discord.Embed(
