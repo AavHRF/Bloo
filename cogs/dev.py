@@ -370,7 +370,7 @@ class developer(commands.Cog):
                         "region": self.linkify(region[0]["region"]),
                         "delegate": region[0]["wa_delegate"],
                         "delegatevotes": region[0]["delegatevotes"],
-                        "numnations": region[0]["num_nations"],
+                        "numnations": region[0]["numnations"],
                         "wanations": region[0]["delegatevotes"] + 1,
                     }
                 )
