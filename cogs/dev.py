@@ -31,7 +31,7 @@ class developer(commands.Cog):
                     audit["status"],
                     audit["region"],
                     audit["delegate"],
-                    audit["delegate_votes"],
+                    audit["delegatevotes"],
                     audit["numnations"],
                     audit["wanations"],
                 ]
