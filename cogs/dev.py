@@ -359,6 +359,7 @@ class developer(commands.Cog):
                         "delegate": "None",
                         "delegatevotes": "None",
                         "numnations": "None",
+                        "wanations": "None",
                     }
                 )
             else:
