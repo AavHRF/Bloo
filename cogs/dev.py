@@ -4,13 +4,40 @@ import datetime
 import gzip
 from xml.etree import ElementTree
 import os
+import openpyxl.worksheet.worksheet
 from discord.ext import commands
 from framework.bot import Bloo
+from openpyxl import Workbook
 
 
 class developer(commands.Cog):
     def __init__(self, bot: Bloo):
         self.bot = bot
+
+    @staticmethod
+    def linkify(region: str):
+        return f"=HYPERLINK(\"https://www.nationstates.net/region={region}\", \"{region}\")"
+
+    @staticmethod
+    def write(audit_list: list):
+        wb = Workbook()
+        ws: openpyxl.worksheet.worksheet.Worksheet = wb.active
+        ws.append(["Discord ID", "Nation", "Status", "Region (link)", "Delegate", "Delegate Votes", "Numnations", "WANations"])
+        for audit in audit_list:
+            ws.append(
+                [
+                    audit["discord_id"],
+                    audit["nation"],
+                    audit["status"],
+                    audit["region"],
+                    audit["delegate"],
+                    audit["delegate_votes"],
+                    audit["numnations"],
+                    audit["wanations"],
+                ]
+            )
+        wb.save("audit.xlsx")
+        wb.close()
 
     @commands.command(name="reload", description="Reload a cog.")
     @commands.is_owner()
@@ -41,7 +68,7 @@ class developer(commands.Cog):
     @commands.command(name="say", description="Send a message to a channel.")
     @commands.is_owner()
     async def say(
-        self, ctx: commands.Context, channel: discord.TextChannel, *, message: str
+            self, ctx: commands.Context, channel: discord.TextChannel, *, message: str
     ):
         await channel.send(message)
         await ctx.send("Done!", ephemeral=True)
@@ -55,7 +82,8 @@ class developer(commands.Cog):
             await self.bot.tree.sync()
         await ctx.send(":arrows_counterclockwise:")
 
-    def parse(self, f):
+    @staticmethod
+    def parse(f):
         return ElementTree.parse(f)
 
     # noinspection DuplicatedCode
@@ -114,12 +142,12 @@ class developer(commands.Cog):
             resident_role = guild_obj.get_role(settings[0]["resident_role"])
             verified_role = guild_obj.get_role(settings[0]["verified_role"])
             if any(
-                [
-                    guest_role is None,
-                    wa_resident_role is None,
-                    resident_role is None,
-                    verified_role is None,
-                ]
+                    [
+                        guest_role is None,
+                        wa_resident_role is None,
+                        resident_role is None,
+                        verified_role is None,
+                    ]
             ):
                 print("At least one role in this guild is not set!")
             for member in guild_obj.members:
@@ -181,7 +209,6 @@ class developer(commands.Cog):
             print(f"Updated {guild_obj.name} | ID: ({guild_id})")
         print("Finished update.")
 
-
     @commands.command()
     @commands.is_owner()
     async def nsl_update(self, ctx):
@@ -189,7 +216,7 @@ class developer(commands.Cog):
         # Download the region dump
         # noinspection DuplicatedCode
         async with self.bot.session.get(
-            "https://www.nationstates.net/pages/regions.xml.gz"
+                "https://www.nationstates.net/pages/regions.xml.gz"
         ) as resp:
             if resp.status != 200:
                 print("Could not download region dump!")
@@ -304,6 +331,52 @@ class developer(commands.Cog):
         log.close()
         await console.send("Done with NSL update.", file=discord.File("nsl_update.log"))
         print("Done with NSL update.")
+
+    @commands.command()
+    @commands.has_role(414822801397121035)
+    async def audit(self, ctx: commands.Context):
+        """
+        Produces a spreadsheet for the NSL audit.
+        """
+        await ctx.send("Generating spreadsheet...")
+        members = await self.bot.fetch(
+            "SELECT * FROM nsl_table WHERE status NOT IN ('resident')"
+        )
+        audit_list = []
+        for member in members:
+            region = await self.bot.fetch(
+                "SELECT * FROM nsl_region_table WHERE founder = $1 OR wa_delegate = $1 ORDER BY inserted_at DESC LIMIT 1",
+                member["nation"],
+            )
+            obj = ctx.guild.get_member(member["discord_id"])
+            if not region:
+                audit_list.append(
+                    {
+                        "discord_id": f"{obj.name}#{obj.discriminator}" if obj else member["discord_id"],
+                        "nation": member["nation"],
+                        "status": member["status"],
+                        "region": "None",
+                        "delegate": "None",
+                        "delegatevotes": "None",
+                        "numnations": "None",
+                    }
+                )
+            else:
+                audit_list.append(
+                    {
+                        "discord_id": f"{obj.name}#{obj.discriminator}" if obj else member["discord_id"],
+                        "nation": member["nation"],
+                        "status": member["status"],
+                        "region": self.linkify(region[0]["region"]),
+                        "delegate": region[0]["wa_delegate"],
+                        "delegatevotes": region[0]["delegatevotes"],
+                        "numnations": region[0]["num_nations"],
+                        "wanations": region[0]["delegatevotes"] + 1,
+                    }
+                )
+
+        sheet = await asyncio.to_thread(self.write, audit_list)
+        await ctx.send("Done.", file=discord.File("audit.xlsx"))
 
 
 async def setup(bot):
