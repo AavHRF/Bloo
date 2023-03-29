@@ -200,7 +200,11 @@ class NSV(commands.Cog):
                 if status == "guest":
                     guest_role = ctx.guild.get_role(settings[0]["guest_role"])
                     if not guest_role:
-                        pass
+                        if not verified_role:
+                            pass
+                        await ctx.author.add_roles(
+                            verified_role, reason="Verified via NSV."
+                        )
                     else:
                         await ctx.author.add_roles(
                             verified_role, guest_role, reason="Verified via NSV."
