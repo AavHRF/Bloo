@@ -101,6 +101,8 @@ class DailyUpdate(commands.Cog):
                 status = "guest"
                 vals = await self.bot.fetch(
                     "SELECT * FROM nsv_table WHERE discord_id = $1 AND guild_id = $2",
+                    discord_id,
+                    guild_id,
                 )
                 if not vals:
                     print("No nations found, skipping...")
