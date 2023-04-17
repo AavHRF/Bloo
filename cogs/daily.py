@@ -119,8 +119,8 @@ class DailyUpdate(commands.Cog):
                         else:
                             if record[0]["region"] == settings[0]["region"]:
                                 status = "resident"
-                            if record[0]["unstatus"] == "WA Member":
-                                status = "wa-resident"
+                                if record[0]["unstatus"] == "WA Member":
+                                    status = "wa-resident"
 
                 if status == "guest":
                     if (
