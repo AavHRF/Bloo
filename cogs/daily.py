@@ -2,6 +2,7 @@ import asyncio
 import discord
 import datetime
 import gzip
+import json
 from discord.ext import commands
 from discord.ext import tasks
 from framework.bot import Bloo
@@ -97,6 +98,11 @@ class DailyUpdate(commands.Cog):
                     if resident_role in member.roles and resident_role is not None:
                         await member.remove_roles(resident_role, reason="No nation verified")
             for member in guild_obj.members:
+                if settings[0]["region"].split(",") > 1:
+                    set_region = settings[0]["region"].split(",")
+                    set_region = [x.strip() for x in set_region]
+                else:
+                    set_region = [settings[0]["region"].strip()]
                 discord_id = member.id
                 status = "guest"
                 vals = await self.bot.fetch(
@@ -117,7 +123,7 @@ class DailyUpdate(commands.Cog):
                             print("Nation has CTEd, skipping...")
                             continue
                         else:
-                            if record[0]["region"] == settings[0]["region"]:
+                            if record[0]["region"] in set_region:
                                 status = "resident"
                                 if record[0]["unstatus"] == "WA Member":
                                     status = "wa-resident"
@@ -305,8 +311,21 @@ class DailyUpdate(commands.Cog):
         await console.send("Done with NSL update.", file=discord.File("nsl_update.log"))
         print("Done with NSL update.")
 
+    @tasks.loop(time=datetime.time(0, 0, 0))
+    async def update_scam_lists(self):
+        async with self.bot.session.get(
+            "https://raw.githubusercontent.com/nikolaischunk/discord-phishing-links/main/domain-list.json"
+        ) as r:
+            self.bot.scam_domains = await r.json()["domains"]
+            with open("scams.json", "w") as f:
+                json.dump(self.bot.scam_domains, f)
+
     @daily_update.before_loop
     async def before_daily_update(self):
+        await self.bot.wait_until_ready()
+
+    @update_scam_lists.before_loop
+    async def before_update_scam_lists(self):
         await self.bot.wait_until_ready()
 
 

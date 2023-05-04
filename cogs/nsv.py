@@ -181,14 +181,19 @@ class NSV(commands.Cog):
         else:
             wa = root.find("UNSTATUS").text
             status = None
-            if settings[0]["region"]:
-                if settings[0]["region"] != region:
-                    status = "guest"
-                else:
+            if settings[0]["region"].split(",") > 1:
+                set_region = settings[0]["region"].split(",")
+                set_region = [x.strip() for x in set_region]
+            else:
+                set_region = [settings[0]["region"].strip()]
+            if set_region:
+                if region in set_region:
                     if "WA" in wa:
                         status = "wa-resident"
                     else:
                         status = "resident"
+                else:
+                    status = "guest"
                 await self.bot.execute(
                     "INSERT INTO nsv_table (discord_id, nation, guild_id, status) VALUES ($1, $2, $3, $4)",
                     ctx.author.id,
