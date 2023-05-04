@@ -181,7 +181,7 @@ class NSV(commands.Cog):
         else:
             wa = root.find("UNSTATUS").text
             status = None
-            if settings[0]["region"].split(",") > 1:
+            if len(settings[0]["region"].split(",")) > 1:
                 set_region = settings[0]["region"].split(",")
                 set_region = [x.strip() for x in set_region]
             else:
