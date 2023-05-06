@@ -102,7 +102,7 @@ class DailyUpdate(commands.Cog):
                     set_region = settings[0]["region"].split(",")
                     set_region = [x.strip() for x in set_region]
                 else:
-                    set_region = [settings[0]["region"].strip()]
+                    set_region = [settings[0]["region"].strip() if settings[0]["region"] else None]
                 discord_id = member.id
                 status = "guest"
                 vals = await self.bot.fetch(
