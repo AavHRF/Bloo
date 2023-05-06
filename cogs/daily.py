@@ -98,7 +98,7 @@ class DailyUpdate(commands.Cog):
                     if resident_role in member.roles and resident_role is not None:
                         await member.remove_roles(resident_role, reason="No nation verified")
             for member in guild_obj.members:
-                if len(settings[0]["region"].split(",")) > 1:
+                if settings[0]["region"] and len(settings[0]["region"].split(",")) > 1:
                     set_region = settings[0]["region"].split(",")
                     set_region = [x.strip() for x in set_region]
                 else:
