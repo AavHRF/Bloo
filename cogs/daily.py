@@ -231,13 +231,13 @@ class DailyUpdate(commands.Cog):
                     # Gotta be verified to have roles! Unless you're a senior... then you're exempt. That's a
                     # sekrit tho.
                     if founder_role in member.roles and senior not in member.roles:
-                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | FOUNDER ROLE REMOVED\n")
+                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | GOVERNOR ROLE REMOVED\n")
                         await member.remove_roles(founder_role)
                     if delegate_role in member.roles and senior not in member.roles:
                         log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | DELEGATE ROLE REMOVED\n")
                         await member.remove_roles(delegate_role)
                     if founder_role in member.roles and senior in member.roles:
-                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | SENIOR FDR EXEMPT\n")
+                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | SENIOR GVNR EXEMPT\n")
                     if delegate_role in member.roles and senior in member.roles:
                         log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | SENIOR DEL EXEMPT\n")
                 else:
@@ -257,7 +257,7 @@ class DailyUpdate(commands.Cog):
                             delegate = True
                     if not founder or not delegate:
                         if founder_role in member.roles and senior not in member.roles and not founder:
-                            log.write(f"{member.name} ({member.id}) | FOUNDER ROLE REMOVED\n")
+                            log.write(f"{member.name} ({member.id}) | GOVERNOR ROLE REMOVED\n")
                             await member.remove_roles(founder_role)
                         if delegate_role in member.roles and senior not in member.roles and not delegate:
                             log.write(f"{member.name} ({member.id}) | DELEGATE ROLE REMOVED\n")
@@ -265,22 +265,22 @@ class DailyUpdate(commands.Cog):
                         continue
                     if founder:
                         if founder_role not in member.roles:
-                            log.write(f"{member.name} ({member.id}) | FOUNDER ROLE ADDED\n")
+                            log.write(f"{member.name} ({member.id}) | GOVERNOR ROLE ADDED\n")
                             await member.add_roles(founder_role)
                         if founder_role in member.roles:
-                            log.write(f"{member.name} ({member.id}) | FDR ROLE EXISTS\n")
+                            log.write(f"{member.name} ({member.id}) | GVNR ROLE EXISTS\n")
                     else:
                         if (
                                 founder_role in member.roles
                                 and senior not in member.roles
                         ):
-                            log.write(f"{member.name} ({member.id}) | FOUNDER ROLE REMOVED\n")
+                            log.write(f"{member.name} ({member.id}) | GOVERNOR ROLE REMOVED\n")
                             await member.remove_roles(founder_role)
                         if (
                                 founder_role in member.roles
                                 and senior in member.roles
                         ):
-                            log.write(f"{member.name} ({member.id}) | SENIOR FDR EXEMPT\n")
+                            log.write(f"{member.name} ({member.id}) | SENIOR GVNR EXEMPT\n")
                     if delegate:
                         if delegate_role not in member.roles:
                             log.write(f"{member.name} ({member.id}) | DELEGATE ROLE ADDED\n")

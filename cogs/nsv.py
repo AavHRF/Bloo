@@ -149,19 +149,19 @@ class NSV(commands.Cog):
                 return
 
             rroot = ElementTree.fromstring(await rresp.text())
-            rfounder = rroot.find("FOUNDER").text
+            rgovernor = rroot.find("GOVERNOR").text
             rdelegate = rroot.find("DELEGATE").text
             founder_role = ctx.guild.get_role(414822833873747984)
             delegate_role = ctx.guild.get_role(622961669634785302)
 
-            if str(rfounder) == str(nation):
+            if str(rgovernor) == str(nation):
                 status = "founder"
             if str(rdelegate) == str(nation):
                 status = "delegate"
                 if status == "founder":
                     status = "founder+delegate"
-            if str(rfounder) != str(nation) and str(rdelegate) != str(nation):
-                print(rfounder == nation)
+            if str(rgovernor) != str(nation) and str(rdelegate) != str(nation):
+                print(rgovernor == nation)
                 status = "resident"
 
             await self.bot.execute(
