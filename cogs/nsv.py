@@ -140,7 +140,7 @@ class NSV(commands.Cog):
             rresp = await self.bot.ns_request(
                 {
                     "region": region,
-                    "q": "founder+delegate",
+                    "q": "governor+delegate",
                 },
                 "GET",
             )
