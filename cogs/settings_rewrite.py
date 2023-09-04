@@ -82,6 +82,7 @@ class RewrittenSettings(commands.Cog):
     def __init__(self, bot: Bloo):
         self.bot = bot
 
+    @app_commands.guilds(1034294542247133194)
     @app_commands.command(
         name="rwsettings",
         description="Change settings for the bot",
