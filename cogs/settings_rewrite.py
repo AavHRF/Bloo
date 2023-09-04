@@ -17,7 +17,7 @@ class VerificationView(discord.ui.View):
         label="Enable/Disable Verification",
         style=discord.ButtonStyle.danger,
         custom_id="verification_toggle",
-        emoji=":white_check_mark:",
+        # emoji=":white_check_mark:",
     )
     async def verification_toggle(self, interaction: discord.Interaction, button: discord.ui.Button):
         pass
