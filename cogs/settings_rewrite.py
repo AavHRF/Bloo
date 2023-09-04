@@ -110,5 +110,5 @@ class RewrittenSettings(commands.Cog):
         await interaction.response.send_message(embed=embed, view=SettingsView(self.bot), ephemeral=True)
 
 
-def setup(bot: Bloo):
-    bot.add_cog(RewrittenSettings(bot))
+async def setup(bot: Bloo):
+    await bot.add_cog(RewrittenSettings(bot))
