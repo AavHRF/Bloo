@@ -3,13 +3,15 @@ import asyncpg
 from discord.ext import commands
 from discord import app_commands
 from framework.bot import Bloo
+from typing import List
 
 
 class VerificationView(discord.ui.View):
 
-    def __init__(self, bot: Bloo, current_settings):
+    def __init__(self, bot: Bloo, current_settings: List[asyncpg.Record]):
         super().__init__()
         self.bot = bot
+        self.current_settings = current_settings
 
     @discord.ui.button(
         label="Enable/Disable Verification",
@@ -43,7 +45,7 @@ class SettingsView(discord.ui.View):
                 title="Verification Settings",
                 description="You seem to have no settings configured! Oh dear! Use the buttons below to get started.",
             )
-            await interaction.response.edit_message(embed=embed, view=VerificationView(self.bot))
+            await interaction.response.edit_message(embed=embed, view=VerificationView(self.bot, nsv_settings))
         else:
             embed = discord.Embed(
                 title="Verification Settings",
