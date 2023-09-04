@@ -45,13 +45,21 @@ class SettingsView(discord.ui.View):
                 title="Verification Settings",
                 description="You seem to have no settings configured! Oh dear! Use the buttons below to get started.",
             )
-            await interaction.followup.edit_message(embed=embed, view=VerificationView(self.bot, nsv_settings))
+            await interaction.followup.edit_message(
+                message_id=interaction.message.id,
+                embed=embed,
+                view=VerificationView(self.bot, nsv_settings)
+            )
         else:
             embed = discord.Embed(
                 title="Verification Settings",
                 description="Configure your verification settings here.",
             )
-            await interaction.followup.edit_message(embed=embed, view=VerificationView(self.bot, nsv_settings))
+            await interaction.followup.edit_message(
+                message_id=interaction.message.id,
+                embed=embed,
+                view=VerificationView(self.bot, nsv_settings)
+            )
         pass
 
     @discord.ui.button(
