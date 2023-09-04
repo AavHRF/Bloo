@@ -17,9 +17,24 @@ class VerificationView(discord.ui.View):
         label="Enable/Disable Verification",
         style=discord.ButtonStyle.danger,
         custom_id="verification_toggle",
-        # emoji=":white_check_mark:",
     )
     async def verification_toggle(self, interaction: discord.Interaction, button: discord.ui.Button):
+        pass
+
+    @discord.ui.button(
+        label="Set Verification Channel",
+        style=discord.ButtonStyle.blurple,
+        custom_id="verification_channel",
+    )
+    async def verification_channel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        pass
+
+    @discord.ui.button(
+        label="Set Roles",
+        style=discord.ButtonStyle.blurple,
+        custom_id="verification_roles",
+    )
+    async def verification_roles(self, interaction: discord.Interaction, button: discord.ui.Button):
         pass
 
 
@@ -42,7 +57,7 @@ class SettingsView(discord.ui.View):
         )
         if not nsv_settings:
             embed = discord.Embed(
-                title="Verification Settings",
+                title=":white_check_mark: Verification Settings",
                 description="You seem to have no settings configured! Oh dear! Use the buttons below to get started.",
             )
             await interaction.followup.edit_message(
@@ -52,7 +67,7 @@ class SettingsView(discord.ui.View):
             )
         else:
             embed = discord.Embed(
-                title="Verification Settings",
+                title=":white_check_mark: Verification Settings",
                 description="Configure your verification settings here.",
             )
             await interaction.followup.edit_message(
@@ -104,17 +119,17 @@ class RewrittenSettings(commands.Cog):
             color=discord.Color.random(),
         )
         embed.add_field(
-            name="Verification Settings",
+            name=":white_check_mark: Verification Settings",
             value="Change settings for the Verification module.",
             inline=False,
         )
         embed.add_field(
-            name="Guild Settings",
+            name=":gear: Guild Settings",
             value="Change settings for the guild.",
             inline=False,
         )
         embed.add_field(
-            name="Welcome Settings",
+            name=":wave: Welcome Settings",
             value="Change settings for the Welcome module.",
             inline=False,
         )
