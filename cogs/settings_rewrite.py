@@ -17,7 +17,7 @@ class VerificationView(discord.ui.View):
         custom_id="verification_toggle",
         emoji=":white_check_mark:",
     )
-    async def verification_toggle(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def verification_toggle(self, interaction: discord.Interaction, button: discord.ui.Button):
         pass
 
 
@@ -33,7 +33,7 @@ class SettingsView(discord.ui.View):
         custom_id="verification_settings",
         # emoji=discord.PartialEmoji.from_str("white_check_mark"),
     )
-    async def verification_settings(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def verification_settings(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)  # Defer the response in case the database locks up
         nsv_settings = await self.bot.fetch(
             "SELECT * FROM nsv_settings WHERE guild_id = $1", interaction.guild.id
@@ -58,7 +58,7 @@ class SettingsView(discord.ui.View):
         custom_id="guild_settings",
         # emoji=discord.PartialEmoji.from_str("gear"),
     )
-    async def guild_settings(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def guild_settings(self, interaction: discord.Interaction, button: discord.ui.Button):
         guild_settings = await self.bot.fetch(
             "SELECT * FROM guild_settings WHERE guild_id = $1", interaction.guild.id
         )
@@ -70,7 +70,7 @@ class SettingsView(discord.ui.View):
         custom_id="welcome_settings",
         # emoji=discord.PartialEmoji.from_str("wave"),
     )
-    async def welcome_settings(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def welcome_settings(self, interaction: discord.Interaction, button: discord.ui.Button):
         welcome_settings = await self.bot.fetch(
             "SELECT * FROM welcome_settings WHERE guild_id = $1", interaction.guild.id
         )
