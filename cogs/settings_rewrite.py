@@ -31,7 +31,7 @@ class SettingsView(discord.ui.View):
         label="Verification Settings",
         style=discord.ButtonStyle.blurple,
         custom_id="verification_settings",
-        emoji=discord.PartialEmoji.from_str("white_check_mark"),
+        # emoji=discord.PartialEmoji.from_str("white_check_mark"),
     )
     async def verification_settings(self, button: discord.ui.Button, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)  # Defer the response in case the database locks up
@@ -56,7 +56,7 @@ class SettingsView(discord.ui.View):
         label="Guild Settings",
         style=discord.ButtonStyle.blurple,
         custom_id="guild_settings",
-        emoji=discord.PartialEmoji.from_str("gear"),
+        # emoji=discord.PartialEmoji.from_str("gear"),
     )
     async def guild_settings(self, button: discord.ui.Button, interaction: discord.Interaction):
         guild_settings = await self.bot.fetch(
@@ -68,7 +68,7 @@ class SettingsView(discord.ui.View):
         label="Welcome Settings",
         style=discord.ButtonStyle.blurple,
         custom_id="welcome_settings",
-        emoji=discord.PartialEmoji.from_str("wave"),
+        # emoji=discord.PartialEmoji.from_str("wave"),
     )
     async def welcome_settings(self, button: discord.ui.Button, interaction: discord.Interaction):
         welcome_settings = await self.bot.fetch(
