@@ -51,7 +51,7 @@ class SettingsView(discord.ui.View):
                 title="Verification Settings",
                 description="Configure your verification settings here.",
             )
-            await interaction.response.edit_message(embed=embed, view=VerificationView(self.bot))
+            await interaction.response.edit_message(embed=embed, view=VerificationView(self.bot, nsv_settings))
         pass
 
     @discord.ui.button(
