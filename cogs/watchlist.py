@@ -428,7 +428,7 @@ class NSLStaffWLButtons(discord.ui.View):
         self.original = original
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user != self.original:
+        if interaction.user.id != self.original.id:
             await interaction.response.send_message(
                 "You cannot use this button.",
                 ephemeral=True,
