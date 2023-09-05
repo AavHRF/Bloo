@@ -45,7 +45,6 @@ class SearchBox(discord.ui.Modal, title="Search"):
             # If the query is an integer, it's a discord ID
             watchlist = await self.bot.fetch(
                 "SELECT * FROM watchlist",
-                query,
             )
             if not watchlist:
                 embed = discord.Embed(
