@@ -246,7 +246,7 @@ class Watchlist(commands.Cog):
     @app_commands.guilds(414822188273762306)
     @app_commands.default_permissions(administrator=True)
     async def wl_add(self, interaction: discord.Interaction, name: str):
-        await interaction.response.send_modal(WatchlistAddModal(self.bot, name)
+        await interaction.response.send_modal(WatchlistAddModal(self.bot, name))
 
 
 async def setup(bot: Bloo):
