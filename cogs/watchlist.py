@@ -23,6 +23,95 @@ class SearchBox(discord.ui.Modal, title="Search"):
         pass
 
 
+class WatchlistAddModal(discord.ui.Modal, title="Add to Watchlist"):
+
+    def __init__(self, bot: Bloo, name: str):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.name = name
+
+    reasoning = discord.ui.TextInput(
+        label="Reasoning",
+        placeholder="Enter the reason for adding this member to the watchlist",
+        required=True,
+        style=discord.TextStyle.long,
+        max_length=1000,
+    )
+
+    known_ids = discord.ui.TextInput(
+        label="Known IDs",
+        placeholder="Enter comma-separated Discord IDs",
+        required=True,
+        max_length=1000,
+    )
+
+    known_names = discord.ui.TextInput(
+        label="Known Names",
+        placeholder="Enter comma-separated Discord names",
+        required=True,
+        max_length=1000,
+    )
+
+    known_nations = discord.ui.TextInput(
+        label="Known Nations",
+        placeholder="Enter comma-separated NationStates nations",
+        required=True,
+        max_length=1000,
+    )
+
+    evidence = discord.ui.TextInput(
+        label="Evidence",
+        placeholder="Enter evidence with a brief description before each item. Place each item on a new line.",
+        required=True,
+        max_length=1000,
+        style=discord.TextStyle.long,
+    )
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        # Parse the discord IDs and clean them up
+        discord_ids = self.known_ids.value.split(",")
+        discord_ids = [discord_id.strip() for discord_id in discord_ids]
+        discord_ids = ",".join(discord_ids)
+
+        # Do the same for the discord names
+        discord_names = self.known_names.value.split(",")
+        discord_names = [discord_name.strip() for discord_name in discord_names]
+        discord_names = ",".join(discord_names)
+
+        # ...andddd the nations
+        nations = self.known_nations.value.split(",")
+        nations = [nation.strip() for nation in nations]
+        nations = ",".join(nations)
+
+        # Evidence is a little trickier to parse because it's newline separated
+        # We want to clean up each line and make sure that it's not empty etc before
+        # we join them all into a comma separated list.
+        evidence = self.evidence.value.split("\n")
+        evidence = [evidence_item.strip() for evidence_item in evidence]
+        evidence = [evidence_item for evidence_item in evidence if
+                    evidence_item != ""]  # I said a little trickier, not a lot trickier
+        evidence = ",".join(evidence)
+
+        # Insert the record into the database
+        await self.bot.execute(
+            "INSERT INTO watchlist (primary_name, reasoning, known_ids, known_names, known_nations, evidence, date_added) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+            self.name,
+            self.reasoning.value,
+            discord_ids,
+            discord_names,
+            nations,
+            evidence,
+            datetime.datetime.now(),
+        )
+
+        # Send a confirmation message
+        await interaction.followup.send(
+            f"Added the member to the watchlist. Use /watchlist to view the watchlist.",
+            ephemeral=True,
+        )
+
+
 class PaginateWL(discord.ui.View):
 
     def __init__(self, bot: Bloo, watchlistitems: List[discord.Embed]):
@@ -84,7 +173,6 @@ class PaginateWL(discord.ui.View):
 
 
 class Watchlist(commands.Cog):
-
     """
     Defines commands used for viewing, adding, and removing from the Watchlist.
 
@@ -110,10 +198,12 @@ class Watchlist(commands.Cog):
     def natify(item: str) -> str:
         return f"[{item}](https://nationstates.net/nation={item.lower().replace(' ', '_')})"
 
-    @app_commands.command()
+    @app_commands.command(
+        description="View the Watchlist"
+    )
     @app_commands.guilds(414822188273762306)
     @app_commands.default_permissions(administrator=True)
-    async def watchlist(self, interaction: discord.Interaction):
+    async def view(self, interaction: discord.Interaction):
         watchlist = await self.bot.fetch("SELECT * FROM watchlist")
         watchlistitems = []
         for item in watchlist:
@@ -149,6 +239,14 @@ class Watchlist(commands.Cog):
             embed=watchlistitems[0],
             view=PaginateWL(self.bot, watchlistitems)
         )
+
+    @app_commands.command(
+        description="Add a member to the Watchlist"
+    )
+    @app_commands.guilds(414822188273762306)
+    @app_commands.default_permissions(administrator=True)
+    async def wl_add(self, interaction: discord.Interaction, name: str):
+        await interaction.response.send_modal(WatchlistAddModal(self.bot, name)
 
 
 async def setup(bot: Bloo):
