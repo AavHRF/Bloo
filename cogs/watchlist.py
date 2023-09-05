@@ -233,7 +233,7 @@ class WatchlistAddModal(discord.ui.Modal, title="Add to Watchlist"):
 
         # Send a confirmation message
         await interaction.followup.send(
-            f"Added the member to the watchlist. Use /watchlist to view the watchlist.",
+            f"Added the member to the watchlist. Use </watchlist:1148519844304650280> to view the watchlist.",
             ephemeral=True,
         )
 
@@ -343,6 +343,28 @@ class Watchlist(commands.Cog):
     @app_commands.default_permissions(administrator=True)
     async def wl_add(self, interaction: discord.Interaction, name: str):
         await interaction.response.send_modal(WatchlistAddModal(self.bot, name))
+
+    @app_commands.command(
+        description="Add a spammer to the Watchlist"
+    )
+    @app_commands.guilds(414822188273762306)
+    @app_commands.default_permissions(administrator=True)
+    async def wl_spammer(self, interaction: discord.Interaction, id: int):
+        await self.bot.execute(
+            "INSERT INTO watchlist (primary_name, reasoning, known_ids, known_names, known_nations, evidence, date_added) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+            id,
+            "Spammer/Scambot",
+            id,
+            "Spammer/Scambot",
+            "Spammer/Scambot",
+            "Spammer/Scambot",
+            datetime.datetime.now(),
+        )
+        await interaction.response.send_message(
+            f"Added the member to the watchlist. Use </watchlist:1148519844304650280> to view the watchlist.",
+            ephemeral=True,
+        )
+
 
 
 async def setup(bot: Bloo):
