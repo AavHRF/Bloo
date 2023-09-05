@@ -14,8 +14,8 @@ from typing import List
 
 # TODO:
 # - Add staff commands for editing the watchlist
-# - Implement member search for the watchlist
-#   - Fuzzy matching?
+# - Implement member search for the watchlist /done
+#   - Fuzzy matching? /done
 # - Watchlist alerts
 #  - When a member joins, check if they're on the watchlist
 #  - If they are, send a message to the staff channel
@@ -61,6 +61,106 @@ def error_embed() -> discord.Embed:
         color=discord.Color.red(),
     )
     return embed
+
+
+class FlexibleWLModal(discord.ui.Modal, title="Update Watchlist Entry"):
+
+    def __init__(self, bot: Bloo, edit_mode: str, name: str):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.edit_mode = edit_mode
+        self.name = name
+        if self.edit_mode == "reasoning":
+            reasoning = discord.ui.TextInput(
+                label="Reasoning",
+                placeholder="Enter the reason for adding this member to the watchlist",
+                required=True,
+                style=discord.TextStyle.long,
+                max_length=1000,
+            )
+            self.add_item(reasoning)
+        elif self.edit_mode == "ids":
+            ids = discord.ui.TextInput(
+                label="Known IDs",
+                placeholder="Enter comma-separated Discord IDs",
+                required=True,
+                max_length=1000,
+            )
+            self.add_item(ids)
+        elif self.edit_mode == "names":
+            names = discord.ui.TextInput(
+                label="Known Names",
+                placeholder="Enter comma-separated Discord names",
+                required=True,
+                max_length=1000,
+            )
+            self.add_item(names)
+        elif self.edit_mode == "nations":
+            nations = discord.ui.TextInput(
+                label="Known Nations",
+                placeholder="Enter comma-separated NationStates nations",
+                required=True,
+                max_length=1000,
+            )
+            self.add_item(nations)
+        elif self.edit_mode == "evidence":
+            evidence = discord.ui.TextInput(
+                label="Evidence",
+                placeholder="Enter evidence with a brief description before each item. Place each item on a new line.",
+                required=True,
+                max_length=1000,
+                style=discord.TextStyle.long,
+            )
+            self.add_item(evidence)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        if self.edit_mode == "reasoning":
+            await self.bot.execute(
+                "UPDATE watchlist SET reasoning = $1 WHERE primary_name = $2",
+                self.children[0].value,
+                self.name,
+            )
+        elif self.edit_mode == "ids":
+            discord_ids = self.children[0].value.split(",")
+            discord_ids = [discord_id.strip() for discord_id in discord_ids]
+            discord_ids = ",".join(discord_ids)
+            await self.bot.execute(
+                "UPDATE watchlist SET known_ids = $1 WHERE primary_name = $2",
+                discord_ids,
+                self.name,
+            )
+        elif self.edit_mode == "names":
+            discord_names = self.children[0].value.split(",")
+            discord_names = [discord_name.strip() for discord_name in discord_names]
+            discord_names = ",".join(discord_names)
+            await self.bot.execute(
+                "UPDATE watchlist SET known_names = $1 WHERE primary_name = $2",
+                discord_names,
+                self.name,
+            )
+        elif self.edit_mode == "nations":
+            nations = self.children[0].value.split(",")
+            nations = [nation.strip() for nation in nations]
+            nations = ",".join(nations)
+            await self.bot.execute(
+                "UPDATE watchlist SET known_nations = $1 WHERE primary_name = $2",
+                nations,
+                self.name,
+            )
+        elif self.edit_mode == "evidence":
+            evidence = self.children[0].value.split("\n")
+            evidence = [evidence_item.strip() for evidence_item in evidence]
+            evidence = [evidence_item for evidence_item in evidence if
+                        evidence_item != ""]  # I said a little trickier, not a lot trickier
+            evidence = ",".join(evidence)
+            await self.bot.execute(
+                "UPDATE watchlist SET evidence = $1 WHERE primary_name = $2",
+                evidence,
+                self.name,
+            )
+        await interaction.response.send_message(
+            f"Updated the watchlist entry for `{self.name}`.",
+        )
 
 
 class SearchBox(discord.ui.Modal, title="Search"):
@@ -297,6 +397,81 @@ class PaginateWL(discord.ui.View):
         await interaction.response.edit_message(view=self)
         self.stop()
 
+    @discord.ui.button(
+        label="Staff Options",
+        style=discord.ButtonStyle.blurple,
+        custom_id="staff_options",
+        emoji="🛠️",
+    )
+    async def staff_options(self, interaction: discord.Interaction, button: discord.ui.Button):
+        nsl_staff = interaction.guild.get_role(414822801397121035)
+        if nsl_staff not in interaction.user.roles:
+            await interaction.response.send_message(
+                "You do not have permission to use this button.",
+                ephemeral=True,
+            )
+            self.staff_options.disabled = True
+        await interaction.response.edit_message(
+            view=NSLStaffWLButtons(self.bot)
+        )
+
+
+class NSLStaffWLButtons(discord.ui.View):
+
+    def __init__(self, bot: Bloo):
+        super().__init__()
+        self.bot = bot
+
+    @discord.ui.button(
+        label="Edit Watchlist Reasoning",
+        style=discord.ButtonStyle.blurple,
+        custom_id="edit_reasoning",
+    )
+    async def edit_reasoning(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(
+            FlexibleWLModal(self.bot, "reasoning", interaction.message.embeds[0].title.split("—")[1].strip())
+        )
+
+    @discord.ui.button(
+        label="Edit Known IDs",
+        style=discord.ButtonStyle.blurple,
+        custom_id="edit_ids",
+    )
+    async def edit_ids(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(
+            FlexibleWLModal(self.bot, "ids", interaction.message.embeds[0].title.split("—")[1].strip())
+        )
+
+    @discord.ui.button(
+        label="Edit Known Names",
+        style=discord.ButtonStyle.blurple,
+        custom_id="edit_names",
+    )
+    async def edit_names(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(
+            FlexibleWLModal(self.bot, "names", interaction.message.embeds[0].title.split("—")[1].strip())
+        )
+
+    @discord.ui.button(
+        label="Edit Known Nations",
+        style=discord.ButtonStyle.blurple,
+        custom_id="edit_nations",
+    )
+    async def edit_nations(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(
+            FlexibleWLModal(self.bot, "nations", interaction.message.embeds[0].title.split("—")[1].strip())
+        )
+
+    @discord.ui.button(
+        label="Edit Evidence",
+        style=discord.ButtonStyle.blurple,
+        custom_id="edit_evidence",
+    )
+    async def edit_evidence(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(
+            FlexibleWLModal(self.bot, "evidence", interaction.message.embeds[0].title.split("—")[1].strip())
+        )
+
 
 class Watchlist(commands.Cog):
     """
@@ -364,7 +539,6 @@ class Watchlist(commands.Cog):
             f"Added the member to the watchlist. Use </watchlist:1148519844304650280> to view the watchlist.",
             ephemeral=True,
         )
-
 
 
 async def setup(bot: Bloo):
