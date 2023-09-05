@@ -6,6 +6,21 @@ from framework.bot import Bloo
 from typing import List
 
 
+# Fuzzy string matching is powered by pg_trgm
+
+# TODO:
+# - Add staff commands for editing the watchlist
+# - Implement member search for the watchlist
+#   - Fuzzy matching?
+# - Watchlist alerts
+#  - When a member joins, check if they're on the watchlist
+#  - If they are, send a message to the staff channel
+#  - Requires me to finish settings rewrite first
+
+def natify(item: str) -> str:
+    return f"[{item}](https://nationstates.net/nation={item.lower().replace(' ', '_')})"
+
+
 class SearchBox(discord.ui.Modal, title="Search"):
 
     def __init__(self, bot: Bloo, message: discord.Message):
@@ -13,14 +28,75 @@ class SearchBox(discord.ui.Modal, title="Search"):
         self.bot = bot
         self.message = message
 
-    name = discord.ui.TextInput(
-        label="Name",
-        placeholder="Enter a name",
+    instructions = discord.ui.TextInput(
+        label="Instructions",
+        placeholder="Enter a name, ID, or nation. Names and nations are fuzzy-matched. Not sure of the whole name? "
+                    "You can use the wildcard search operators as follows.\n* = any number of characters\n? = exactly "
+                    "one character\n| = or\nExample: united*|calanworie",
+    )
+    query = discord.ui.TextInput(
+        label="Query",
+        placeholder="Enter a name, ID, or nation.",
         required=True,
     )
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
-        pass
+        # Determine what the user is searching for
+        await interaction.response.defer(thinking=True)
+        query = self.query.value
+        try:
+            int(query)
+            # If the query is an integer, it's a discord ID
+            # We can just search the database for that ID, but first
+            # we need to wrap the query in % to match even if there's more than one
+            # ID in a row.
+            query = f"%{query}%"
+            record = await self.bot.fetch(
+                "SELECT * FROM watchlist WHERE known_ids = $1",
+                query,
+            )
+            # You can only have one record per Discord ID, so we can just grab the first
+            # record in the list and return the embed.
+            record = record[0]
+            embed = discord.Embed(
+                title=f"WATCHLIST — {record['primary_name']}",
+                description=f"**Reason for Watchlist Addition:**\n {record['reasoning']}\n"
+            )
+            known_ids = record['known_ids'].split(",")
+            known_names = record['known_names'].split(",")
+            known_nations = [natify(nation) for nation in record['known_nations'].split(",")]
+            evidence = record['evidence'].split(",")
+            embed.add_field(
+                name="Known IDs",
+                value="\n".join(known_ids),
+            )
+            embed.add_field(
+                name="Known Names",
+                value="\n".join(known_names),
+            )
+            embed.add_field(
+                name="Known Nations",
+                value="\n".join(known_nations),
+            )
+            embed.add_field(
+                name="Evidence",
+                value="\n".join(evidence),
+            )
+            embed.set_footer(text=f"Added on {record['date_added']}")
+            await interaction.followup.send(
+                f"Your search for `{query}` returned the following result:",
+                embed=embed
+            )
+        except ValueError:
+            # You can't coerce a string to an integer, so it's not a discord ID
+            # It's either a name or a nation
+            # We can use the fuzzy string matching provided by pg_trgm to search for
+            # similar names and nations
+            query = f"%{query}%"
+            record = await self.bot.fetch(
+                "SELECT * FROM watchlist WHERE primary_name % $1 OR known_names % $1 OR known_nations % $1",
+                query,
+            )
 
 
 class WatchlistAddModal(discord.ui.Modal, title="Add to Watchlist"):
@@ -194,10 +270,6 @@ class Watchlist(commands.Cog):
     def __init__(self, bot: Bloo):
         self.bot = bot
 
-    @staticmethod
-    def natify(item: str) -> str:
-        return f"[{item}](https://nationstates.net/nation={item.lower().replace(' ', '_')})"
-
     @app_commands.command(
         description="View the Watchlist"
     )
@@ -213,7 +285,7 @@ class Watchlist(commands.Cog):
             )
             known_ids = item['known_ids'].split(",")
             known_names = item['known_names'].split(",")
-            known_nations = [self.natify(nation) for nation in item['known_nations'].split(",")]
+            known_nations = [natify(nation) for nation in item['known_nations'].split(",")]
             evidence = item['evidence'].split(",")
 
             embed.add_field(
