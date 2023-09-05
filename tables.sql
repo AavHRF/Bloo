@@ -92,6 +92,7 @@ CREATE TABLE IF NOT EXISTS warn_table (
 );
 
 CREATE TABLE IF NOT EXISTS watchlist (
+    internal_id SERIAL PRIMARY KEY,
     primary_name VARCHAR(50) NOT NULL,
     reasoning TEXT NOT NULL,
     known_ids TEXT NOT NULL,
