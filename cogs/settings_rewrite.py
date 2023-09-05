@@ -120,6 +120,32 @@ class SettingsView(discord.ui.View):
                 title=":white_check_mark: Verification Settings",
                 description="Configure your verification settings here.",
             )
+            embed.add_field(
+                name="Forced Verification Status",
+                value="Enabled" if nsv_settings[0]["force_verification"] else "Disabled",
+            )
+            embed.add_field(
+                name="Region",
+                value=nsv_settings[0]["region"],
+            )
+            embed.add_field(
+                name="Verified Role",
+                value=interaction.guild.get_role(nsv_settings[0]["verified_role"]).mention if nsv_settings[0]["verified_role"] else "None",
+            )
+            embed.add_field(
+                name="Guest Role",
+                value=interaction.guild.get_role(nsv_settings[0]["guest_role"]).mention if nsv_settings[0]["guest_role"] else "None",
+            )
+            embed.add_field(
+                name="Resident Role",
+                value=interaction.guild.get_role(nsv_settings[0]["resident_role"]).mention if nsv_settings[0]["resident_role"] else "None",
+            )
+            embed.add_field(
+                name="WA Resident Role",
+                value=interaction.guild.get_role(nsv_settings[0]["wa_resident_role"]).mention if nsv_settings[0]["wa_resident_role"] else "None",
+            )
+
+
             await interaction.followup.edit_message(
                 message_id=interaction.message.id,
                 embed=embed,
