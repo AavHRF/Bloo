@@ -6,6 +6,14 @@ CREATE TABLE IF NOT EXISTS nsv_table (
     UNIQUE (discord_id, guild_id)
 );
 
+CREATE TABLE IF NOT EXISTS guild_settings (
+    guild_id BIGINT,
+    administrator_role BIGINT,
+    moderator_role BIGINT,
+    admin_channel BIGINT,
+    log_channel BIGINT
+);
+
 CREATE TABLE IF NOT EXISTS nsv_settings (
     guild_id BIGINT,
     guest_role BIGINT,
@@ -72,4 +80,23 @@ CREATE TABLE IF NOT EXISTS tickets (
     response_id VARCHAR(50) NOT NULL,
     filed_at TIMESTAMP NOT NULL,
     PRIMARY KEY (ticketcount)
+);
+
+CREATE TABLE IF NOT EXISTS warn_table (
+    guild_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    reason VARCHAR(1000) NOT NULL,
+    warned_by BIGINT NOT NULL,
+    warned_at TIMESTAMP NOT NULL,
+    UNIQUE (user_id, guild_id, warned_at)
+);
+
+CREATE TABLE IF NOT EXISTS watchlist (
+    primary_name VARCHAR(50) NOT NULL,
+    reasoning TEXT NOT NULL,
+    known_ids TEXT NOT NULL,
+    known_names TEXT NOT NULL,
+    known_nations TEXT NOT NULL,
+    evidence TEXT NOT NULL,
+    date_added TIMESTAMP NOT NULL
 );
