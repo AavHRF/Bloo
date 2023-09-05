@@ -416,15 +416,25 @@ class PaginateWL(discord.ui.View):
             )
         else:
             await interaction.response.edit_message(
-                view=NSLStaffWLButtons(self.bot)
+                view=NSLStaffWLButtons(self.bot, interaction.user)
             )
 
 
 class NSLStaffWLButtons(discord.ui.View):
 
-    def __init__(self, bot: Bloo):
+    def __init__(self, bot: Bloo, original: discord.Member | discord.User):
         super().__init__()
         self.bot = bot
+        self.original = original
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.original:
+            await interaction.response.send_message(
+                "You cannot use this button.",
+                ephemeral=True,
+            )
+            return False
+        return True
 
     @discord.ui.button(
         label="Edit Watchlist Reasoning",
