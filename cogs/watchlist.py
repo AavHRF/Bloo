@@ -69,13 +69,13 @@ class SearchBox(discord.ui.Modal, title="Search"):
             # You can only have one record per Discord ID, so we can just grab the first
             # record in the list and return the embed.
             embed = discord.Embed(
-                title=f"WATCHLIST — {record[0]['primary_name']}",
+                title=f"WATCHLIST — {record['primary_name']}",
                 description=f"**Reason for Watchlist Addition:**\n {record['reasoning']}\n"
             )
-            known_ids = record[0]['known_ids'].split(",")
-            known_names = record[0]['known_names'].split(",")
-            known_nations = [natify(nation) for nation in record[0]['known_nations'].split(",")]
-            evidence = record[0]['evidence'].split(",")
+            known_ids = record['known_ids'].split(",")
+            known_names = record['known_names'].split(",")
+            known_nations = [natify(nation) for nation in record['known_nations'].split(",")]
+            evidence = record['evidence'].split(",")
             embed.add_field(
                 name="Known IDs",
                 value="\n".join(known_ids),
@@ -92,7 +92,7 @@ class SearchBox(discord.ui.Modal, title="Search"):
                 name="Evidence",
                 value="\n".join(evidence),
             )
-            embed.set_footer(text=f"Added on {record[0]['date_added']}")
+            embed.set_footer(text=f"Added on {record['date_added']}")
             await interaction.followup.send(
                 f"Your search for `{query}` returned the following result:",
                 embed=embed
