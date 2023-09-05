@@ -148,3 +148,7 @@ class Watchlist(commands.Cog):
             embed=watchlistitems[0],
             view=PaginateWL(self.bot, watchlistitems)
         )
+
+
+async def setup(bot: Bloo):
+    await bot.add_cog(Watchlist(bot))
