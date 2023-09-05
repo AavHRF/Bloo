@@ -143,7 +143,7 @@ class SearchBox(discord.ui.Modal, title="Search"):
                         watchlistitems.append(watchlist_embed(item))
 
                     await interaction.followup.send(
-                        f"Your search for `{query}` returned {count} results:",
+                        f"Your search for `{query.strip('%')}` returned {count} results:",
                         embed=watchlistitems[0],
                         view=PaginateWL(self.bot, watchlistitems)
                     )
