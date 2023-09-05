@@ -476,6 +476,18 @@ class NSLStaffWLButtons(discord.ui.View):
             FlexibleWLModal(self.bot, "evidence", interaction.message.embeds[0].title.split("—")[1].strip())
         )
 
+    @discord.ui.button(
+        label="Close",
+        style=discord.ButtonStyle.danger,
+        custom_id="close",
+        emoji="🔒",
+    )
+    async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
+        for child in self.children:
+            child.disabled = True
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
 
 class Watchlist(commands.Cog):
     """
