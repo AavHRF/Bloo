@@ -406,14 +406,18 @@ class PaginateWL(discord.ui.View):
     async def staff_options(self, interaction: discord.Interaction, button: discord.ui.Button):
         nsl_staff = interaction.guild.get_role(414822801397121035)
         if nsl_staff not in interaction.user.roles:
-            await interaction.response.send_message(
+            self.staff_options.disabled = True
+            await interaction.response.edit_message(
+                view=self
+            )
+            await interaction.followup.send(
                 "You do not have permission to use this button.",
                 ephemeral=True,
             )
-            self.staff_options.disabled = True
-        await interaction.response.edit_message(
-            view=NSLStaffWLButtons(self.bot)
-        )
+        else:
+            await interaction.response.edit_message(
+                view=NSLStaffWLButtons(self.bot)
+            )
 
 
 class NSLStaffWLButtons(discord.ui.View):
