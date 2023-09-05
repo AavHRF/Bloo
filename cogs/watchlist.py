@@ -27,13 +27,6 @@ class SearchBox(discord.ui.Modal, title="Search"):
         super().__init__(timeout=None)
         self.bot = bot
         self.message = message
-
-    instructions = discord.ui.TextInput(
-        label="Instructions",
-        placeholder="Enter a name, ID, or nation. Names and nations are fuzzy-matched. Not sure of the whole name? "
-                    "You can use the wildcard search operators as follows.\n* = any number of characters\n? = exactly "
-                    "one character\n| = or\nExample: united*|calanworie",
-    )
     query = discord.ui.TextInput(
         label="Query",
         placeholder="Enter a name, ID, or nation.",
