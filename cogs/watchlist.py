@@ -203,7 +203,7 @@ class Watchlist(commands.Cog):
     )
     @app_commands.guilds(414822188273762306)
     @app_commands.default_permissions(administrator=True)
-    async def view(self, interaction: discord.Interaction):
+    async def watchlist(self, interaction: discord.Interaction):
         watchlist = await self.bot.fetch("SELECT * FROM watchlist")
         watchlistitems = []
         for item in watchlist:
