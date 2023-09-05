@@ -69,14 +69,14 @@ class NSV(commands.Cog):
             "SELECT * FROM nsv_settings WHERE guild_id = $1",
             ctx.guild.id,
         )
+        if not settings:
+            await ctx.send("This server has not been set up yet for NSV.")
+            return
         welcome_message = (
             settings[0]["welcome_message"]
             if settings[0]["welcome_message"]
             else "Welcome! Roles granted."
         )
-        if not settings:
-            await ctx.send("This server has not been set up yet for NSV.")
-            return
         await ctx.author.send(
             f"Please log into {nation.replace('_', ' ').title()} now. Once you have done so, open this link: "
             f"https://nationstates.net/page=verify_login"
