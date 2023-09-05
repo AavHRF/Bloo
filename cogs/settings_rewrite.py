@@ -3,12 +3,62 @@ import asyncpg
 from discord.ext import commands
 from discord import app_commands
 from framework.bot import Bloo
-from typing import List
+from typing import List, Optional
+
+
+class NSVRoleView(discord.ui.View):
+
+    def __init__(self, bot: Bloo):
+        super().__init__()
+        self.bot = bot
+
+    @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Verified Role", row=0)
+    async def verified(self, interaction: discord.Interaction, select: discord.ui.Select):
+        await interaction.response.defer()
+
+    @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Guest Role", row=1)
+    async def guest(self, interaction: discord.Interaction, select: discord.ui.Select):
+        await interaction.response.defer()
+
+    @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Resident Role", row=2)
+    async def resident(self, interaction: discord.Interaction, select: discord.ui.Select):
+        await interaction.response.defer()
+
+    @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="WA Resident Role", row=3)
+    async def wa_resident(self, interaction: discord.Interaction, select: discord.ui.Select):
+        await interaction.response.defer()
+
+    @discord.ui.button(
+        label="Save",
+        style=discord.ButtonStyle.blurple,
+        custom_id="save_roles",
+    )
+    async def save_roles(self, interaction: discord.Interaction, button: discord.ui.Button):
+        pass
+
+    @discord.ui.button(
+        label="Cancel",
+        style=discord.ButtonStyle.danger,
+        custom_id="cancel_roles",
+    )
+    async def cancel_roles(self, interaction: discord.Interaction, button: discord.ui.Button):
+        for child in self.children:
+            child.disabled = True
+        self.go_back.disabled = False
+        await interaction.response.edit_message(view=self)
+
+    @discord.ui.button(
+        label="Go Back",
+        style=discord.ButtonStyle.secondary,
+        custom_id="go_back",
+    )
+    async def go_back(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(view=VerificationView(self.bot))
 
 
 class VerificationView(discord.ui.View):
 
-    def __init__(self, bot: Bloo, current_settings: List[asyncpg.Record]):
+    def __init__(self, bot: Bloo, current_settings: Optional[List[asyncpg.Record]] = None):
         super().__init__()
         self.bot = bot
         self.current_settings = current_settings
@@ -22,11 +72,11 @@ class VerificationView(discord.ui.View):
         pass
 
     @discord.ui.button(
-        label="Set Verification Channel",
+        label="Set Verification Message",
         style=discord.ButtonStyle.blurple,
-        custom_id="verification_channel",
+        custom_id="verification_message",
     )
-    async def verification_channel(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def verification_message(self, interaction: discord.Interaction, button: discord.ui.Button):
         pass
 
     @discord.ui.button(
@@ -35,7 +85,7 @@ class VerificationView(discord.ui.View):
         custom_id="verification_roles",
     )
     async def verification_roles(self, interaction: discord.Interaction, button: discord.ui.Button):
-        pass
+        await interaction.response.edit_message(view=NSVRoleView(self.bot))
 
 
 class SettingsView(discord.ui.View):
