@@ -1,3 +1,4 @@
+import asyncpg
 import discord
 import datetime
 from discord.ext import commands
@@ -24,12 +25,51 @@ def natify(item: str) -> str:
     return f"[{item}](https://nationstates.net/nation={item.lower().replace(' ', '_')})"
 
 
+def watchlist_embed(record: asyncpg.Record) -> discord.Embed:
+    embed = discord.Embed(
+        title=f"WATCHLIST — {record['primary_name']}",
+        description=f"**Reason for Watchlist Addition:**\n {record['reasoning']}\n"
+    )
+    known_ids = record['known_ids'].split(",")
+    known_names = record['known_names'].split(",")
+    known_nations = [natify(nation) for nation in record['known_nations'].split(",")]
+    evidence = record['evidence'].split(",")
+    embed.add_field(
+        name="Known IDs",
+        value="\n".join(known_ids),
+    )
+    embed.add_field(
+        name="Known Names",
+        value="\n".join(known_names),
+    )
+    embed.add_field(
+        name="Known Nations",
+        value="\n".join(known_nations),
+    )
+    embed.add_field(
+        name="Evidence",
+        value="\n".join(evidence),
+    )
+    embed.set_footer(text=f"Added on {record['date_added']}")
+    return embed
+
+
+def error_embed() -> discord.Embed:
+    embed = discord.Embed(
+        title="No Results",
+        description="Your search returned no results.",
+        color=discord.Color.red(),
+    )
+    return embed
+
+
 class SearchBox(discord.ui.Modal, title="Search"):
 
     def __init__(self, bot: Bloo, message: discord.Message):
         super().__init__(timeout=None)
         self.bot = bot
         self.message = message
+
     query = discord.ui.TextInput(
         label="Query",
         placeholder="Enter a name, ID, or nation.",
@@ -47,13 +87,8 @@ class SearchBox(discord.ui.Modal, title="Search"):
                 "SELECT * FROM watchlist",
             )
             if not watchlist:
-                embed = discord.Embed(
-                    title="No Results",
-                    description="Your search returned no results.",
-                    color=discord.Color.red(),
-                )
                 await interaction.followup.send(
-                    embed=embed,
+                    embed=error_embed(),
                 )
                 return
 
@@ -68,35 +103,17 @@ class SearchBox(discord.ui.Modal, title="Search"):
 
             # You can only have one record per Discord ID, so we can just grab the first
             # record in the list and return the embed.
-            embed = discord.Embed(
-                title=f"WATCHLIST — {record['primary_name']}",
-                description=f"**Reason for Watchlist Addition:**\n {record['reasoning']}\n"
-            )
-            known_ids = record['known_ids'].split(",")
-            known_names = record['known_names'].split(",")
-            known_nations = [natify(nation) for nation in record['known_nations'].split(",")]
-            evidence = record['evidence'].split(",")
-            embed.add_field(
-                name="Known IDs",
-                value="\n".join(known_ids),
-            )
-            embed.add_field(
-                name="Known Names",
-                value="\n".join(known_names),
-            )
-            embed.add_field(
-                name="Known Nations",
-                value="\n".join(known_nations),
-            )
-            embed.add_field(
-                name="Evidence",
-                value="\n".join(evidence),
-            )
-            embed.set_footer(text=f"Added on {record['date_added']}")
-            await interaction.followup.send(
-                f"Your search for `{query}` returned the following result:",
-                embed=embed
-            )
+            if found:
+                embed = watchlist_embed(record)
+                await interaction.followup.send(
+                    f"Your search for `{query}` returned the following result:",
+                    embed=embed
+                )
+            else:
+                await interaction.followup.send(
+                    embed=error_embed(),
+                )
+
         except ValueError:
             # You can't coerce a string to an integer, so it's not a discord ID
             # It's either a name or a nation
@@ -107,6 +124,29 @@ class SearchBox(discord.ui.Modal, title="Search"):
                 "SELECT * FROM watchlist WHERE primary_name % $1 OR known_names % $1 OR known_nations % $1",
                 query,
             )
+            if not record:
+                await interaction.followup.send(
+                    embed=error_embed(),
+                )
+                return
+            else:
+                count = len(record)
+                if count == 1:
+                    embed = watchlist_embed(record[0])
+                    await interaction.followup.send(
+                        f"Your search for `{query}` returned the following result:",
+                        embed=embed
+                    )
+                else:
+                    watchlistitems = []
+                    for item in record:
+                        watchlistitems.append(watchlist_embed(item))
+
+                    await interaction.followup.send(
+                        f"Your search for `{query}` returned {count} results:",
+                        embed=watchlistitems[0],
+                        view=PaginateWL(self.bot, watchlistitems)
+                    )
 
 
 class WatchlistAddModal(discord.ui.Modal, title="Add to Watchlist"):
@@ -289,33 +329,7 @@ class Watchlist(commands.Cog):
         watchlist = await self.bot.fetch("SELECT * FROM watchlist")
         watchlistitems = []
         for item in watchlist:
-            embed = discord.Embed(
-                title=f"WATCHLIST — {item['primary_name']}",
-                description=f"**Reason for Watchlist Addition:**\n {item['reasoning']}\n"
-            )
-            known_ids = item['known_ids'].split(",")
-            known_names = item['known_names'].split(",")
-            known_nations = [natify(nation) for nation in item['known_nations'].split(",")]
-            evidence = item['evidence'].split(",")
-
-            embed.add_field(
-                name="Known IDs",
-                value="\n".join(known_ids),
-            )
-            embed.add_field(
-                name="Known Names",
-                value="\n".join(known_names),
-            )
-            embed.add_field(
-                name="Known Nations",
-                value="\n".join(known_nations),
-            )
-            embed.add_field(
-                name="Evidence",
-                value="\n".join(evidence),
-            )
-            embed.set_footer(text=f"Added on {item['date_added']}")
-            watchlistitems.append(embed)
+            watchlistitems.append(watchlist_embed(item))
 
         await interaction.response.send_message(
             embed=watchlistitems[0],
