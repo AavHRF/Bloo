@@ -7,6 +7,9 @@ from typing import List
 
 
 # Fuzzy string matching is powered by pg_trgm
+# Was attempting to use fuzzymatching for the IDs, but it's not working
+# so now we're iterating over the list of IDs and checking if the query is in the list
+# Slow? Yes. But with very limited data, it's not a big deal.
 
 # TODO:
 # - Add staff commands for editing the watchlist
@@ -40,15 +43,11 @@ class SearchBox(discord.ui.Modal, title="Search"):
         try:
             int(query)
             # If the query is an integer, it's a discord ID
-            # We can just search the database for that ID, but first
-            # we need to wrap the query in % to match even if there's more than one
-            # ID in a row.
-            query = f"%{query}%"
-            record = await self.bot.fetch(
-                "SELECT * FROM watchlist WHERE known_ids = $1",
+            watchlist = await self.bot.fetch(
+                "SELECT * FROM watchlist",
                 query,
             )
-            if not record:
+            if not watchlist:
                 embed = discord.Embed(
                     title="No Results",
                     description="Your search returned no results.",
@@ -59,10 +58,19 @@ class SearchBox(discord.ui.Modal, title="Search"):
                 )
                 return
 
+            found = False
+            record = None
+            for item in watchlist:
+                ids = item['known_ids'].split(",")
+                if query in ids:
+                    found = True
+                    record = item
+                    break
+
             # You can only have one record per Discord ID, so we can just grab the first
             # record in the list and return the embed.
             embed = discord.Embed(
-                title=f"WATCHLIST — {record['primary_name']}",
+                title=f"WATCHLIST — {record[0]['primary_name']}",
                 description=f"**Reason for Watchlist Addition:**\n {record['reasoning']}\n"
             )
             known_ids = record[0]['known_ids'].split(",")
