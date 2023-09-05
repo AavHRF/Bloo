@@ -1,4 +1,5 @@
 import discord
+import datetime
 from discord.ext import commands
 from discord import app_commands
 from framework.bot import Bloo
@@ -67,7 +68,7 @@ class PaginateWL(discord.ui.View):
         emoji="🔍",
     )
     async def search(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(modal=SearchBox(self.bot, interaction.message))
+        await interaction.response.send_modal(SearchBox(self.bot, interaction.message))
 
     @discord.ui.button(
         label="Close",
