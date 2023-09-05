@@ -15,6 +15,7 @@ class Bloo(commands.Bot):
             intents=discord.Intents.all(),
             help_command=None,
         )
+        self.scam_domains = None
         self.pool: Optional[asyncpg.Pool] = None
         self.config = json.load(open("config.json"))
         self.session = None
@@ -42,7 +43,9 @@ class Bloo(commands.Bot):
                 print(e)
                 pass
 
-    async def fetch(self, query: str, *args) -> List[asyncpg.Record]:
+        self.scam_domains = json.load(open("scams.json"))["domains"]
+
+    async def fetch(self, query: str, *args) -> List[asyncpg.Record] | asyncpg.Record:
         async with self.pool.acquire() as con:
             return await con.fetch(query, *args)
 

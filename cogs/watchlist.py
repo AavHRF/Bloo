@@ -50,7 +50,6 @@ class SearchBox(discord.ui.Modal, title="Search"):
             )
             # You can only have one record per Discord ID, so we can just grab the first
             # record in the list and return the embed.
-            record = record[0]
             embed = discord.Embed(
                 title=f"WATCHLIST — {record['primary_name']}",
                 description=f"**Reason for Watchlist Addition:**\n {record['reasoning']}\n"
