@@ -261,7 +261,7 @@ class SearchBox(discord.ui.Modal, title="Search"):
                     await interaction.followup.send(
                         f"Your search for `{query.strip('%')}` returned {count} results:",
                         embed=watchlistitems[0],
-                        view=PaginateWL(self.bot, watchlistitems),
+                        view=PaginateWL(self.bot, watchlistitems, interaction.user),
                     )
 
 
@@ -355,7 +355,7 @@ class WatchlistAddModal(discord.ui.Modal, title="Add to Watchlist"):
 
 
 class PaginateWL(discord.ui.View):
-    def __init__(self, bot: Bloo, watchlistitems: List[discord.Embed], invoker: discord.Member | discord.User = None):
+    def __init__(self, bot: Bloo, watchlistitems: List[discord.Embed], invoker: discord.Member | discord.User):
         super().__init__()
         self.current_page = 0
         self.bot = bot
@@ -595,7 +595,7 @@ class Watchlist(commands.Cog):
             watchlistitems.append(watchlist_embed(item))
 
         await interaction.response.send_message(
-            embed=watchlistitems[0], view=PaginateWL(self.bot, watchlistitems)
+            embed=watchlistitems[0], view=PaginateWL(self.bot, watchlistitems, interaction.user)
         )
 
     @app_commands.command(description="Add a member to the Watchlist")
