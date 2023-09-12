@@ -573,7 +573,7 @@ class SettingsView(discord.ui.View):
         embed.add_field(
             name="Welcome Channel",
             value=interaction.guild.get_channel(
-                welcome_settings[0]["channel_id"]
+                welcome_settings[0]["welcome_channel"]
             ).mention if welcome_settings else "None",
         )
         embed.add_field(
