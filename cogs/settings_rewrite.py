@@ -6,6 +6,93 @@ from framework.bot import Bloo
 from typing import List, Optional
 
 
+class Prompt(discord.ui.Modal, title="Bloo Configuration"):
+
+    def __init__(self, bot: Bloo, mode: str, current_settings: Optional[List[asyncpg.Record]] = None):
+        super().__init__()
+        self.bot = bot
+        self.mode = mode
+        self.list_settings = current_settings if current_settings else None
+        self.internal_settings = current_settings[0] if current_settings else None
+
+        if mode.lower() == "region":
+            self.add_item(
+                discord.ui.TextInput(
+                    label="Region Name",
+                    placeholder="Enter your region here. (Leave blank to clear)",
+                    max_length=50,
+                )
+            )
+        elif mode.lower() == "welcome":
+            self.add_item(
+                discord.ui.TextInput(
+                    label="Welcome Message",
+                    placeholder="Enter your welcome message here. (Leave blank to clear) Max length is 750 characters.",
+                    max_length=750,
+                    style=discord.TextStyle.paragraph,
+                )
+            )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        if self.mode == "region":
+            if self.children[0].value:
+                if self.internal_settings:
+                    await self.bot.execute(
+                        "UPDATE nsv_settings SET region = $1 WHERE guild_id = $2",
+                        self.children[0].value,
+                        interaction.guild.id,
+                    )
+                else:
+                    await self.bot.execute(
+                        "INSERT INTO nsv_settings (guild_id, region) VALUES ($1, $2)",
+                        interaction.guild.id,
+                        self.children[0].value,
+                    )
+            else:
+                if self.internal_settings:
+                    await self.bot.execute(
+                        "UPDATE nsv_settings SET region = $1 WHERE guild_id = $2",
+                        None,
+                        interaction.guild.id,
+                    )
+                else:
+                    pass  # Why would we do anything here?
+            embed = interaction.message.embeds[0]
+            embed.set_field_at(
+                1,
+                name="Region",
+                value=self.children[0].value if self.children[0].value else "None",
+            )
+            await interaction.response.edit_message(embed=embed, view=VerificationView(self.bot, embed, self.list_settings))
+        elif self.mode == "welcome":
+            if self.children[0].value:
+                if self.internal_settings:
+                    await self.bot.execute(
+                        "UPDATE welcome_settings SET message = $1 WHERE guild_id = $2",
+                        self.children[0].value,
+                        interaction.guild.id,
+                    )
+                else:
+                    await self.bot.execute(
+                        "INSERT INTO welcome_settings (guild_id, message) VALUES ($1, $2)",
+                        interaction.guild.id,
+                        self.children[0].value,
+                    )
+            else:
+                if self.internal_settings:
+                    await self.bot.execute(
+                        "UPDATE welcome_settings SET message = $1 WHERE guild_id = $2",
+                        None,
+                        interaction.guild.id,
+                    )
+                else:
+                    pass
+            await interaction.response.send_message(
+                "Your settings have been updated!",
+                ephemeral=True
+            )
+
+
 class NSVRoleView(discord.ui.View):
     def __init__(self, bot: Bloo, current_settings: Optional[List[asyncpg.Record]] = None):
         super().__init__()
@@ -15,7 +102,7 @@ class NSVRoleView(discord.ui.View):
 
     @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Verified Role", row=0)
     async def verified(
-        self, interaction: discord.Interaction, select: discord.ui.Select
+            self, interaction: discord.Interaction, select: discord.ui.Select
     ):
         await interaction.response.defer()
 
@@ -25,13 +112,13 @@ class NSVRoleView(discord.ui.View):
 
     @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Resident Role", row=2)
     async def resident(
-        self, interaction: discord.Interaction, select: discord.ui.Select
+            self, interaction: discord.Interaction, select: discord.ui.Select
     ):
         await interaction.response.defer()
 
     @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="WA Resident Role", row=3)
     async def wa_resident(
-        self, interaction: discord.Interaction, select: discord.ui.Select
+            self, interaction: discord.Interaction, select: discord.ui.Select
     ):
         await interaction.response.defer()
 
@@ -41,7 +128,7 @@ class NSVRoleView(discord.ui.View):
         custom_id="save_roles",
     )
     async def save_roles(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         for child in self.children:
             child.disabled = True
@@ -150,7 +237,7 @@ class NSVRoleView(discord.ui.View):
         custom_id="cancel_roles",
     )
     async def cancel_roles(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         for child in self.children:
             child.disabled = True
@@ -163,17 +250,18 @@ class NSVRoleView(discord.ui.View):
         custom_id="go_back",
     )
     async def go_back(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
-        await interaction.response.edit_message(view=VerificationView(self.bot, interaction.message.embeds[0], self.list_settings))
+        await interaction.response.edit_message(
+            view=VerificationView(self.bot, interaction.message.embeds[0], self.list_settings))
 
 
 class VerificationView(discord.ui.View):
     def __init__(
-        self,
-        bot: Bloo,
-        embed: discord.Embed,
-        current_settings: Optional[List[asyncpg.Record]] = None,
+            self,
+            bot: Bloo,
+            embed: discord.Embed,
+            current_settings: Optional[List[asyncpg.Record]] = None,
     ):
         super().__init__()
         self.bot = bot
@@ -188,7 +276,7 @@ class VerificationView(discord.ui.View):
         emoji="🎛️",
     )
     async def verification_toggle(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         if self.internal_settings:
             await self.bot.execute(
@@ -222,7 +310,7 @@ class VerificationView(discord.ui.View):
         emoji="✉️",
     )
     async def verification_message(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         pass
 
@@ -233,16 +321,26 @@ class VerificationView(discord.ui.View):
         emoji="👥",
     )
     async def verification_roles(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         await interaction.response.edit_message(view=NSVRoleView(self.bot, self.list_settings))
+
+    @discord.ui.button(
+        label="Set Region",
+        style=discord.ButtonStyle.blurple,
+        custom_id="verification_region",
+        emoji="🌎",
+    )
+    async def verification_region(
+            self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        await interaction.response.send_modal(Prompt(self.bot, "region", self.list_settings))
 
 
 class SettingsView(discord.ui.View):
     def __init__(self, bot: Bloo, embed: discord.Embed):
         super().__init__()
         self.bot = bot
-
 
     @discord.ui.button(
         label="Verification Settings",
@@ -251,7 +349,7 @@ class SettingsView(discord.ui.View):
         emoji="✅",
     )
     async def verification_settings(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         await interaction.response.defer(
             ephemeral=True
@@ -329,7 +427,7 @@ class SettingsView(discord.ui.View):
         emoji="⚙️",
     )
     async def guild_settings(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         guild_settings = await self.bot.fetch(
             "SELECT * FROM guild_settings WHERE guild_id = $1", interaction.guild.id
@@ -343,7 +441,7 @@ class SettingsView(discord.ui.View):
         emoji="👋",
     )
     async def welcome_settings(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         welcome_settings = await self.bot.fetch(
             "SELECT * FROM welcome_settings WHERE guild_id = $1", interaction.guild.id
