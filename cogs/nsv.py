@@ -8,14 +8,13 @@ from framework.bot import Bloo
 
 
 class DropSelect(discord.ui.Select):
-
     def __init__(self, bot: Bloo, natlist: list, message: discord.Message):
         super().__init__(placeholder="Select a nation")
         self.bot = bot
         self.natlist = natlist
         self.message = message
         for nation in natlist[:24]:
-            self.add_option(label=nation.replace('_', ' ').title(), value=nation)
+            self.add_option(label=nation.replace("_", " ").title(), value=nation)
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
@@ -34,7 +33,6 @@ class DropSelect(discord.ui.Select):
 
 
 class DropView(discord.ui.View):
-
     def __init__(self, bot: Bloo, natlist: list, message: discord.Message):
         super().__init__()
         self.add_item(DropSelect(bot, natlist, message))
@@ -90,7 +88,7 @@ class NSV(commands.Cog):
             msg: discord.Message = await self.bot.wait_for(
                 "message",
                 check=lambda m: m.author == ctx.author
-                                and m.channel == ctx.author.dm_channel,
+                and m.channel == ctx.author.dm_channel,
                 timeout=180,
             )
         except asyncio.TimeoutError:
@@ -185,7 +183,9 @@ class NSV(commands.Cog):
                 set_region = settings[0]["region"].split(",")
                 set_region = [x.strip() for x in set_region]
             else:
-                set_region = [settings[0]["region"].strip() if settings[0]["region"] else None]
+                set_region = [
+                    settings[0]["region"].strip() if settings[0]["region"] else None
+                ]
             if set_region:
                 if region in set_region:
                     if "WA" in wa:
@@ -207,9 +207,16 @@ class NSV(commands.Cog):
                     if not guest_role:
                         if not verified_role:
                             pass
-                        await ctx.author.add_roles(
-                            verified_role, reason="Verified via NSV."
-                        )
+                        try:
+                            await ctx.author.add_roles(
+                                verified_role, reason="Verified via NSV."
+                            )
+                        except discord.Forbidden:
+                            await ctx.send(
+                                "I can't give you the verified role! Please make sure that I have the Manage Roles "
+                                "permission and that my role is higher than the verified role."
+                            )
+                            return
                     else:
                         await ctx.author.add_roles(
                             verified_role, guest_role, reason="Verified via NSV."
@@ -270,22 +277,28 @@ class NSV(commands.Cog):
                 msg: discord.Message = await self.bot.wait_for(
                     "message",
                     check=lambda m: m.author == ctx.author
-                                    and m.channel == ctx.author.dm_channel,
+                    and m.channel == ctx.author.dm_channel,
                     timeout=60,
                 )
             except asyncio.TimeoutError:
                 await ctx.send("Timed out.")
                 return
             try:
-                await self.auth_flow(ctx, str(msg.clean_content).lower().replace(" ", "_"))
+                await self.auth_flow(
+                    ctx, str(msg.clean_content).lower().replace(" ", "_")
+                )
             except discord.Forbidden:
-                await ctx.send("I can't DM you! Please make sure that your DMs are open. Failing to do so will result "
-                               "in the process erroring out.")
+                await ctx.send(
+                    "I can't DM you! Please make sure that your DMs are open. Failing to do so will result "
+                    "in the process erroring out."
+                )
 
     @verify.error
     async def verify_error(self, ctx: commands.Context, error: Exception):
         if isinstance(error, commands.CommandOnCooldown):
-            await ctx.send("You're on cooldown! Please wait 60 seconds before trying again.")
+            await ctx.send(
+                "You're on cooldown! Please wait 60 seconds before trying again."
+            )
         else:
             raise error
 
@@ -296,7 +309,9 @@ class NSV(commands.Cog):
         Drops your nation for the server.
         """
         if ctx.guild.id == 414822188273762306:
-            listof = await self.bot.fetch("SELECT nation FROM nsl_table WHERE discord_id = $1", ctx.author.id)
+            listof = await self.bot.fetch(
+                "SELECT nation FROM nsl_table WHERE discord_id = $1", ctx.author.id
+            )
             if listof:
                 nlist = [record["nation"] for record in listof]
                 embed = discord.Embed(
