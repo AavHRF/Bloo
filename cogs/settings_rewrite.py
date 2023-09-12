@@ -27,7 +27,16 @@ class Prompt(discord.ui.Modal, title="Bloo Configuration"):
             self.add_item(
                 discord.ui.TextInput(
                     label="Welcome Message",
-                    placeholder="Enter your welcome message here. (Leave blank to clear) Max length is 750 characters.",
+                    placeholder="Enter your welcome message here. (Leave blank to clear)",
+                    max_length=500,
+                    style=discord.TextStyle.paragraph,
+                )
+            )
+        elif mode.lower() == "verification":
+            self.add_item(
+                discord.ui.TextInput(
+                    label="Verification Message",
+                    placeholder="Enter your verification message here. (Leave blank to clear)",
                     max_length=750,
                     style=discord.TextStyle.paragraph,
                 )
@@ -68,20 +77,47 @@ class Prompt(discord.ui.Modal, title="Bloo Configuration"):
             if self.children[0].value:
                 if self.internal_settings:
                     await self.bot.execute(
-                        "UPDATE welcome_settings SET message = $1 WHERE guild_id = $2",
+                        "UPDATE welcome_settings SET embed_message = $1 WHERE guild_id = $2",
                         self.children[0].value,
                         interaction.guild.id,
                     )
                 else:
                     await self.bot.execute(
-                        "INSERT INTO welcome_settings (guild_id, message) VALUES ($1, $2)",
+                        "INSERT INTO welcome_settings (guild_id, embed_message) VALUES ($1, $2)",
                         interaction.guild.id,
                         self.children[0].value,
                     )
             else:
                 if self.internal_settings:
                     await self.bot.execute(
-                        "UPDATE welcome_settings SET message = $1 WHERE guild_id = $2",
+                        "UPDATE welcome_settings SET embed_message = $1 WHERE guild_id = $2",
+                        None,
+                        interaction.guild.id,
+                    )
+                else:
+                    pass
+            await interaction.response.send_message(
+                "Your settings have been updated!",
+                ephemeral=True
+            )
+        elif self.mode == "verification":
+            if self.children[0].value:
+                if self.internal_settings:
+                    await self.bot.execute(
+                        "UPDATE nsv_settings SET welcome_message = $1 WHERE guild_id = $2",
+                        self.children[0].value,
+                        interaction.guild.id,
+                    )
+                else:
+                    await self.bot.execute(
+                        "INSERT INTO nsv_settings (guild_id, welcome_message) VALUES ($1, $2)",
+                        interaction.guild.id,
+                        self.children[0].value,
+                    )
+            else:
+                if self.internal_settings:
+                    await self.bot.execute(
+                        "UPDATE nsv_settings SET welcome_message = $1 WHERE guild_id = $2",
                         None,
                         interaction.guild.id,
                     )
@@ -312,7 +348,7 @@ class VerificationView(discord.ui.View):
     async def verification_message(
             self, interaction: discord.Interaction, button: discord.ui.Button
     ):
-        pass
+        await interaction.response.send_modal(Prompt(self.bot, "verification", self.list_settings))
 
     @discord.ui.button(
         label="Set Roles",
