@@ -72,7 +72,8 @@ class Prompt(discord.ui.Modal, title="Bloo Configuration"):
                 name="Region",
                 value=self.children[0].value if self.children[0].value else "None",
             )
-            await interaction.response.edit_message(embed=embed, view=VerificationView(self.bot, embed, self.list_settings))
+            await interaction.response.edit_message(embed=embed,
+                                                    view=VerificationView(self.bot, embed, self.list_settings))
         elif self.mode == "welcome":
             if self.children[0].value:
                 if self.internal_settings:
@@ -373,6 +374,85 @@ class VerificationView(discord.ui.View):
         await interaction.response.send_modal(Prompt(self.bot, "region", self.list_settings))
 
 
+class WelcomeView(discord.ui.View):
+
+    def __init__(self, bot: Bloo, current_settings: Optional[List[asyncpg.Record]] = None):
+        super().__init__()
+        self.bot = bot
+        self.internal_settings = current_settings[0] if current_settings else None
+        self.list_settings = current_settings if current_settings else None
+
+    @discord.ui.button(
+        label="Enable/Disable Welcomes",
+        style=discord.ButtonStyle.blurple,
+        custom_id="welcome_toggle",
+        emoji="🎛️",
+    )
+    async def welcome_toggle(
+            self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        pass
+
+    @discord.ui.button(
+        label="Set Welcome Message",
+        style=discord.ButtonStyle.blurple,
+        custom_id="welcome_message",
+        emoji="✉️",
+    )
+    async def welcome_message(
+            self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        await interaction.response.send_modal(Prompt(self.bot, "welcome", self.list_settings))
+
+    @discord.ui.select(
+        cls=discord.ui.ChannelSelect,
+        channel_types=[discord.ChannelType.text],
+        placeholder="Welcome Channel",
+        max_values=1,
+    )
+    async def welcome_channel(
+            self, interaction: discord.Interaction, select: discord.ui.Select
+    ):
+        if self.internal_settings:
+            await self.bot.execute(
+                "UPDATE welcome_settings SET welcome_channel = $1 WHERE guild_id = $2",
+                select.values[0].id,
+                interaction.guild.id,
+            )
+            self.list_settings = await self.bot.fetch(
+                "SELECT * FROM welcome_settings WHERE guild_id = $1", interaction.guild.id
+            )
+            self.internal_settings = self.list_settings[0]
+            embed = interaction.message.embeds[0]
+            embed.set_field_at(
+                1,
+                name="Welcome Channel",
+                value=interaction.guild.get_channel(
+                    self.internal_settings["welcome_channel"]
+                ).mention if self.internal_settings["welcome_channel"] != 0 else "None"
+            )
+            await interaction.response.edit_message(embed=embed, view=self)
+        else:
+            await self.bot.execute(
+                "INSERT INTO welcome_settings (guild_id, welcome_channel) VALUES ($1, $2)",
+                interaction.guild.id,
+                select.values[0].id,
+            )
+            self.list_settings = await self.bot.fetch(
+                "SELECT * FROM welcome_settings WHERE guild_id = $1", interaction.guild.id
+            )
+            self.internal_settings = self.list_settings[0]
+            embed = interaction.message.embeds[0]
+            embed.set_field_at(
+                1,
+                name="Welcome Channel",
+                value=interaction.guild.get_channel(
+                    self.internal_settings["welcome_channel"]
+                ).mention if self.internal_settings["welcome_channel"] != 0 else "None"
+            )
+            await interaction.response.edit_message(embed=embed, view=self)
+
+
 class SettingsView(discord.ui.View):
     def __init__(self, bot: Bloo, embed: discord.Embed):
         super().__init__()
@@ -482,7 +562,32 @@ class SettingsView(discord.ui.View):
         welcome_settings = await self.bot.fetch(
             "SELECT * FROM welcome_settings WHERE guild_id = $1", interaction.guild.id
         )
-        pass
+        embed = discord.Embed(
+            title=":wave: Welcome Settings",
+            description="Configure your welcome settings here.",
+        )
+        embed.add_field(
+            name="Welcome Message",
+            value=welcome_settings[0]["embed_message"] if welcome_settings else "None",
+        )
+        embed.add_field(
+            name="Welcome Channel",
+            value=interaction.guild.get_channel(
+                welcome_settings[0]["channel_id"]
+            ).mention if welcome_settings else "None",
+        )
+        embed.add_field(
+            name="Welcomes Enabled",
+            value="Enabled" if welcome_settings[0]["enabled"] else "Disabled",
+        )
+        embed.add_field(
+            name="Ping on Welcome",
+            value="Enabled" if welcome_settings[0]["ping_on_join"] else "Disabled",
+        )
+        await interaction.response.edit_message(
+            embed=embed,
+            view=WelcomeView(self.bot, welcome_settings)
+        )
 
 
 class RewrittenSettings(commands.Cog):
