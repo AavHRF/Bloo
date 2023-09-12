@@ -397,6 +397,19 @@ class VerificationView(discord.ui.View):
     ):
         await interaction.response.send_modal(Prompt(self.bot, "region", self.list_settings))
 
+    @discord.ui.button(
+        label="Go Back",
+        style=discord.ButtonStyle.secondary,
+        custom_id="go_back",
+    )
+    async def go_back(
+            self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        await interaction.response.edit_message(
+            embed=main_settings(),
+            view=SettingsView(self.bot),
+        )
+
 
 class WelcomeView(discord.ui.View):
 
@@ -415,7 +428,28 @@ class WelcomeView(discord.ui.View):
     async def welcome_toggle(
             self, interaction: discord.Interaction, button: discord.ui.Button
     ):
-        pass
+        if self.internal_settings:
+            await self.bot.execute(
+                "UPDATE welcome_settings SET welcome_enabled = $1 WHERE guild_id = $2",
+                not self.internal_settings["welcome_enabled"],
+                interaction.guild.id,
+            )
+            self.list_settings = await self.bot.fetch(
+                "SELECT * FROM welcome_settings WHERE guild_id = $1", interaction.guild.id
+            )
+            self.internal_settings = self.list_settings[0]
+            embed = interaction.message.embeds[0]
+            embed.set_field_at(
+                2,
+                name="Welcomes Enabled",
+                value="Enabled" if self.internal_settings["welcome_enabled"] else "Disabled",
+            )
+            await interaction.response.edit_message(embed=embed, view=self)
+        else:
+            await interaction.response.send_message(
+                "You need to set up your welcome settings first!",
+                ephemeral=True,
+            )
 
     @discord.ui.button(
         label="Set Welcome Message",
