@@ -77,7 +77,10 @@ class VerificationView(discord.ui.View):
             #     not self.current_settings["force_verification"],
             #     interaction.guild.id,
             # )
-            self.current_settings["force_verification"] = not self.current_settings["force_verification"]
+            self.current_settings = await self.bot.fetch(
+                "SELECT * FROM nsv_settings WHERE guild_id = $1", interaction.guild.id
+            )
+            self.current_settings = self.current_settings[0]
             self.embed.set_field_at(
                 0,
                 name="Forced Verification Status",
