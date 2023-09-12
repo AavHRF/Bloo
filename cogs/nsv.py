@@ -218,6 +218,8 @@ class NSV(commands.Cog):
                             )
                             return
                     else:
+                        if not verified_role:
+                            pass
                         await ctx.author.add_roles(
                             verified_role, guest_role, reason="Verified via NSV."
                         )
@@ -226,9 +228,16 @@ class NSV(commands.Cog):
                     if not resident_role:
                         pass
                     else:
-                        await ctx.author.add_roles(
-                            verified_role, resident_role, reason="Verified via NSV."
-                        )
+                        try:
+                            await ctx.author.add_roles(
+                                verified_role, resident_role, reason="Verified via NSV."
+                            )
+                        except discord.Forbidden:
+                            await ctx.send(
+                                "I can't give you roles! Please make sure that I have the Manage Roles "
+                                "permission and that my role is higher than the roles that I should assign."
+                            )
+                            return
                         if status == "wa-resident":
                             wa_resident_role = ctx.guild.get_role(
                                 settings[0]["wa_resident_role"]
@@ -251,7 +260,13 @@ class NSV(commands.Cog):
                     status,
                 )
                 verified = ctx.guild.get_role(settings[0]["verified_role"])
-                await ctx.author.add_roles(verified, reason="Verified via NSV.")
+                if not verified:
+                    await ctx.send(
+                        "I can't give you the verified role! Please make sure that I have the Manage Roles "
+                        "permission and that my role is higher than the verified role."
+                    )
+                else:
+                    await ctx.author.add_roles(verified, reason="Verified via NSV.")
                 await ctx.author.send(welcome_message)
 
     @commands.guild_only()
