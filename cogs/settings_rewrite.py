@@ -587,7 +587,8 @@ class GuildSettingsView(discord.ui.View):
     ):
         await interaction.response.defer()
 
-    @discord.ui.select(cls=discord.ui.ChannelSelect, channel_types=[discord.ChannelType.text], placeholder="Admin Channel", row=2)
+    @discord.ui.select(cls=discord.ui.ChannelSelect, channel_types=[discord.ChannelType.text],
+                       placeholder="Admin Channel", row=2)
     async def admin_channel(
             self, interaction: discord.Interaction, select: discord.ui.Select
     ):
@@ -678,6 +679,46 @@ class GuildSettingsView(discord.ui.View):
             value=interaction.guild.get_channel(
                 self.internal_settings["admin_channel"]
             ).mention if self.internal_settings["admin_channel"] != 0 else "None"
+        )
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(
+        label="Clear",
+        style=discord.ButtonStyle.danger,
+        custom_id="clear_roles",
+    )
+    async def clear_roles(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not self.internal_settings:
+            await interaction.response.send_message(
+                "You don't have any settings to clear!",
+                ephemeral=True
+            )
+            return
+
+        await self.bot.execute(
+            "UPDATE guild_settings SET administrator_role = $1, moderator_role = $2, admin_channel = $3 WHERE guild_id = $4",
+            0,
+            0,
+            0,
+            interaction.guild.id,
+        )
+        self.list_settings = None
+        self.internal_settings = None
+        embed = interaction.message.embeds[0]
+        embed.set_field_at(
+            0,
+            name="Administrator Role",
+            value="None"
+        )
+        embed.set_field_at(
+            1,
+            name="Moderator Role",
+            value="None"
+        )
+        embed.set_field_at(
+            2,
+            name="Admin Channel",
+            value="None"
         )
         await interaction.response.edit_message(embed=embed, view=self)
 
