@@ -10,7 +10,8 @@ class NSVRoleView(discord.ui.View):
     def __init__(self, bot: Bloo, current_settings: Optional[List[asyncpg.Record]] = None):
         super().__init__()
         self.bot = bot
-        self.current_settings = current_settings[0] if current_settings else None
+        self.internal_settings = current_settings[0] if current_settings else None
+        self.list_settings = current_settings if current_settings else None
 
     @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Verified Role", row=0)
     async def verified(
@@ -49,8 +50,8 @@ class NSVRoleView(discord.ui.View):
             if self.guest.values:
                 guest = self.guest.values[0].id
             else:
-                if self.current_settings:
-                    guest = self.current_settings["guest_role"]
+                if self.internal_settings:
+                    guest = self.internal_settings["guest_role"]
                 else:
                     guest = 0
         except IndexError:
@@ -59,8 +60,8 @@ class NSVRoleView(discord.ui.View):
             if self.resident.values:
                 resident = self.resident.values[0].id
             else:
-                if self.current_settings:
-                    resident = self.current_settings["resident_role"]
+                if self.internal_settings:
+                    resident = self.internal_settings["resident_role"]
                 else:
                     resident = 0
         except IndexError:
@@ -69,8 +70,8 @@ class NSVRoleView(discord.ui.View):
             if self.wa_resident.values:
                 wa_resident = self.wa_resident.values[0].id
             else:
-                if self.current_settings:
-                    wa_resident = self.current_settings["wa_resident_role"]
+                if self.internal_settings:
+                    wa_resident = self.internal_settings["wa_resident_role"]
                 else:
                     wa_resident = 0
         except IndexError:
@@ -79,14 +80,14 @@ class NSVRoleView(discord.ui.View):
             if self.verified.values:
                 verified = self.verified.values[0].id
             else:
-                if self.current_settings:
-                    verified = self.current_settings["verified_role"]
+                if self.internal_settings:
+                    verified = self.internal_settings["verified_role"]
                 else:
                     verified = 0
         except IndexError:
             verified = 0
 
-        if not self.current_settings:
+        if not self.internal_settings:
             await self.bot.execute(
                 "INSERT INTO nsv_settings (guild_id, guest_role, resident_role, wa_resident_role, verified_role) VALUES ($1, $2, $3, $4, $5)",
                 interaction.guild.id,
@@ -95,10 +96,10 @@ class NSVRoleView(discord.ui.View):
                 wa_resident,
                 verified,
             )
-            self.current_settings = await self.bot.fetch(
+            self.list_settings = await self.bot.fetch(
                 "SELECT * FROM nsv_settings WHERE guild_id = $1", interaction.guild.id
             )
-            self.current_settings = self.current_settings[0]
+            self.internal_settings = self.list_settings[0]
         else:
             await self.bot.execute(
                 "UPDATE nsv_settings SET guest_role = $1, resident_role = $2, wa_resident_role = $3, verified_role = $4 WHERE guild_id = $5",
@@ -108,38 +109,38 @@ class NSVRoleView(discord.ui.View):
                 verified,
                 interaction.guild.id,
             )
-            self.current_settings = await self.bot.fetch(
+            self.list_settings = await self.bot.fetch(
                 "SELECT * FROM nsv_settings WHERE guild_id = $1", interaction.guild.id
             )
-            self.current_settings = self.current_settings[0]
+            self.internal_settings = self.list_settings[0]
         embed = interaction.message.embeds[0]
         embed.set_field_at(
             2,
             name="Verified Role",
             value=interaction.guild.get_role(
-                self.current_settings["verified_role"]
-            ).mention if self.current_settings["verified_role"] != 0 else "None"
+                self.internal_settings["verified_role"]
+            ).mention if self.internal_settings["verified_role"] != 0 else "None"
         )
         embed.set_field_at(
             3,
             name="Guest Role",
             value=interaction.guild.get_role(
-                self.current_settings["guest_role"]
-            ).mention if self.current_settings["guest_role"] != 0 else "None"
+                self.internal_settings["guest_role"]
+            ).mention if self.internal_settings["guest_role"] != 0 else "None"
         )
         embed.set_field_at(
             4,
             name="Resident Role",
             value=interaction.guild.get_role(
-                self.current_settings["resident_role"]
-            ).mention if self.current_settings["resident_role"] != 0 else "None"
+                self.internal_settings["resident_role"]
+            ).mention if self.internal_settings["resident_role"] != 0 else "None"
         )
         embed.set_field_at(
             5,
             name="WA Resident Role",
             value=interaction.guild.get_role(
-                self.current_settings["wa_resident_role"]
-            ).mention if self.current_settings["wa_resident_role"] != 0 else "None"
+                self.internal_settings["wa_resident_role"]
+            ).mention if self.internal_settings["wa_resident_role"] != 0 else "None"
         )
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -164,7 +165,7 @@ class NSVRoleView(discord.ui.View):
     async def go_back(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
-        await interaction.response.edit_message(view=VerificationView(self.bot, interaction.message.embeds[0]))
+        await interaction.response.edit_message(view=VerificationView(self.bot, interaction.message.embeds[0], self.list_settings))
 
 
 class VerificationView(discord.ui.View):
