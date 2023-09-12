@@ -659,27 +659,47 @@ class GuildSettingsView(discord.ui.View):
             )
             self.internal_settings = self.list_settings[0]
         embed = interaction.message.embeds[0]
-        embed.set_field_at(
-            0,
-            name="Administrator Role",
-            value=interaction.guild.get_role(
-                self.internal_settings["administrator_role"]
-            ).mention if self.internal_settings["administrator_role"] != 0 else "None"
-        )
-        embed.set_field_at(
-            1,
-            name="Moderator Role",
-            value=interaction.guild.get_role(
-                self.internal_settings["moderator_role"]
-            ).mention if self.internal_settings["moderator_role"] != 0 else "None"
-        )
-        embed.set_field_at(
-            2,
-            name="Admin Channel",
-            value=interaction.guild.get_channel(
-                self.internal_settings["admin_channel"]
-            ).mention if self.internal_settings["admin_channel"] != 0 else "None"
-        )
+        try:
+            embed.set_field_at(
+                0,
+                name="Administrator Role",
+                value=interaction.guild.get_role(
+                    self.internal_settings["administrator_role"]
+                ).mention if self.internal_settings["administrator_role"] != 0 else "None"
+            )
+            embed.set_field_at(
+                1,
+                name="Moderator Role",
+                value=interaction.guild.get_role(
+                    self.internal_settings["moderator_role"]
+                ).mention if self.internal_settings["moderator_role"] != 0 else "None"
+            )
+            embed.set_field_at(
+                2,
+                name="Admin Channel",
+                value=interaction.guild.get_channel(
+                    self.internal_settings["admin_channel"]
+                ).mention if self.internal_settings["admin_channel"] != 0 else "None"
+            )
+        except IndexError:
+            embed.add_field(
+                name="Administrator Role",
+                value=interaction.guild.get_role(
+                    self.internal_settings["administrator_role"]
+                ).mention if self.internal_settings["administrator_role"] != 0 else "None"
+            )
+            embed.add_field(
+                name="Moderator Role",
+                value=interaction.guild.get_role(
+                    self.internal_settings["moderator_role"]
+                ).mention if self.internal_settings["moderator_role"] != 0 else "None"
+            )
+            embed.add_field(
+                name="Admin Channel",
+                value=interaction.guild.get_channel(
+                    self.internal_settings["admin_channel"]
+                ).mention if self.internal_settings["admin_channel"] != 0 else "None"
+            )
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(
