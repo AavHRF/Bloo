@@ -567,6 +567,131 @@ class WelcomeView(discord.ui.View):
         )
 
 
+class GuildSettingsView(discord.ui.View):
+
+    def __init__(self, bot: Bloo, current_settings: Optional[List[asyncpg.Record]] = None):
+        super().__init__()
+        self.bot = bot
+        self.internal_settings = current_settings[0] if current_settings else None
+        self.list_settings = current_settings if current_settings else None
+
+    @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Administrator Role", row=0)
+    async def administrator(
+            self, interaction: discord.Interaction, select: discord.ui.Select
+    ):
+        await interaction.response.defer()
+
+    @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Moderator Role", row=1)
+    async def moderator(
+            self, interaction: discord.Interaction, select: discord.ui.Select
+    ):
+        await interaction.response.defer()
+
+    @discord.ui.select(cls=discord.ui.ChannelSelect, channel_types=[discord.ChannelType.text], placeholder="Admin Channel", row=2)
+    async def admin_channel(
+            self, interaction: discord.Interaction, select: discord.ui.Select
+    ):
+        await interaction.response.defer()
+
+    @discord.ui.button(
+        label="Save",
+        style=discord.ButtonStyle.blurple,
+        custom_id="save_roles",
+    )
+    async def save_roles(self, interaction: discord.Interaction, button: discord.ui.Button):
+        for child in self.children:
+            child.disabled = True
+        self.go_back.disabled = False
+        try:
+            if self.administrator.values:
+                administrator = self.administrator.values[0].id
+            else:
+                if self.internal_settings:
+                    administrator = self.internal_settings["administrator_role"]
+                else:
+                    administrator = 0
+        except IndexError:
+            administrator = 0
+        try:
+            if self.moderator.values:
+                moderator = self.moderator.values[0].id
+            else:
+                if self.internal_settings:
+                    moderator = self.internal_settings["moderator_role"]
+                else:
+                    moderator = 0
+        except IndexError:
+            moderator = 0
+        try:
+            if self.admin_channel.values:
+                admin_channel = self.admin_channel.values[0].id
+            else:
+                if self.internal_settings:
+                    admin_channel = self.internal_settings["admin_channel"]
+                else:
+                    admin_channel = 0
+        except IndexError:
+            admin_channel = 0
+
+        if not self.internal_settings:
+            await self.bot.execute(
+                "INSERT INTO guild_settings (guild_id, administrator_role, moderator_role, admin_channel) VALUES ($1, $2, $3, $4)",
+                interaction.guild.id,
+                administrator,
+                moderator,
+                admin_channel,
+            )
+            self.list_settings = await self.bot.fetch(
+                "SELECT * FROM guild_settings WHERE guild_id = $1", interaction.guild.id
+            )
+            self.internal_settings = self.list_settings[0]
+        else:
+            await self.bot.execute(
+                "UPDATE guild_settings SET administrator_role = $1, moderator_role = $2, admin_channel = $3 WHERE guild_id = $4",
+                administrator,
+                moderator,
+                admin_channel,
+                interaction.guild.id,
+            )
+            self.list_settings = await self.bot.fetch(
+                "SELECT * FROM guild_settings WHERE guild_id = $1", interaction.guild.id
+            )
+            self.internal_settings = self.list_settings[0]
+        embed = interaction.message.embeds[0]
+        embed.set_field_at(
+            0,
+            name="Administrator Role",
+            value=interaction.guild.get_role(
+                self.internal_settings["administrator_role"]
+            ).mention if self.internal_settings["administrator_role"] != 0 else "None"
+        )
+        embed.set_field_at(
+            1,
+            name="Moderator Role",
+            value=interaction.guild.get_role(
+                self.internal_settings["moderator_role"]
+            ).mention if self.internal_settings["moderator_role"] != 0 else "None"
+        )
+        embed.set_field_at(
+            2,
+            name="Admin Channel",
+            value=interaction.guild.get_channel(
+                self.internal_settings["admin_channel"]
+            ).mention if self.internal_settings["admin_channel"] != 0 else "None"
+        )
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(
+        label="Cancel",
+        style=discord.ButtonStyle.danger,
+        custom_id="cancel_roles",
+    )
+    async def cancel_roles(
+            self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        await interaction.response.edit_message(embed=main_settings(), view=SettingsView(self.bot))
+
+
 class SettingsView(discord.ui.View):
     def __init__(self, bot: Bloo):
         super().__init__()
@@ -662,7 +787,32 @@ class SettingsView(discord.ui.View):
         guild_settings = await self.bot.fetch(
             "SELECT * FROM guild_settings WHERE guild_id = $1", interaction.guild.id
         )
-        pass
+        embed = discord.Embed(
+            title=":gear: Guild Settings",
+            description="Configure your guild settings here.",
+        )
+        embed.add_field(
+            name="Administrator Role",
+            value=interaction.guild.get_role(
+                guild_settings[0]["administrator_role"]
+            ).mention if guild_settings else "None",
+        )
+        embed.add_field(
+            name="Moderator Role",
+            value=interaction.guild.get_role(
+                guild_settings[0]["moderator_role"]
+            ).mention if guild_settings else "None",
+        )
+        embed.add_field(
+            name="Admin Channel",
+            value=interaction.guild.get_channel(
+                guild_settings[0]["admin_channel"]
+            ).mention if guild_settings else "None",
+        )
+        await interaction.response.edit_message(
+            embed=embed,
+            view=GuildSettingsView(self.bot, guild_settings)
+        )
 
     @discord.ui.button(
         label="Welcome Settings",
