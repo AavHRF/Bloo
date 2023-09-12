@@ -135,7 +135,7 @@ class SettingsView(discord.ui.View):
             await interaction.followup.edit_message(
                 message_id=interaction.message.id,
                 embed=embed,
-                view=VerificationView(self.bot, nsv_settings)
+                view=VerificationView(self.bot, embed, nsv_settings)
             )
         else:
             embed = discord.Embed(
@@ -170,7 +170,7 @@ class SettingsView(discord.ui.View):
             await interaction.followup.edit_message(
                 message_id=interaction.message.id,
                 embed=embed,
-                view=VerificationView(self.bot, nsv_settings, embed)
+                view=VerificationView(self.bot, embed, nsv_settings)
             )
         pass
 
