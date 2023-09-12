@@ -39,14 +39,14 @@ class Prompt(discord.ui.Modal, title="Bloo Configuration"):
                 if self.internal_settings:
                     await self.bot.execute(
                         "UPDATE nsv_settings SET region = $1 WHERE guild_id = $2",
-                        self.children[0].value,
+                        self.children[0].value.lower().replace(" ", "_"),
                         interaction.guild.id,
                     )
                 else:
                     await self.bot.execute(
                         "INSERT INTO nsv_settings (guild_id, region) VALUES ($1, $2)",
                         interaction.guild.id,
-                        self.children[0].value,
+                        self.children[0].value.lower().replace(" ", "_"),
                     )
             else:
                 if self.internal_settings:
