@@ -1,11 +1,11 @@
 import asyncpg
 import discord
 import datetime
+import re
 from discord.ext import commands
 from discord import app_commands
 from framework.bot import Bloo
 from typing import List
-
 
 # Fuzzy string matching is powered by pg_trgm
 # Was attempting to use fuzzymatching for the IDs, but it's not working
@@ -21,6 +21,9 @@ from typing import List
 #  - If they are, send a message to the staff channel
 #  - Requires me to finish settings rewrite first
 
+BE_SAFE = None
+
+
 def natify(item: str) -> str:
     return f"[{item}](https://nationstates.net/nation={item.lower().replace(' ', '_')})"
 
@@ -29,12 +32,14 @@ def watchlist_embed(record: asyncpg.Record) -> discord.Embed:
     embed = discord.Embed(
         title=f"WATCHLIST — {record['primary_name']}",
         description=f"**Reason for Watchlist Addition:**\n {record['reasoning']}\n",
-        color=discord.Color.red() if "spammer" in record['reasoning'].lower() else discord.Color.gold(),
+        color=discord.Color.red()
+        if "spammer" in record["reasoning"].lower()
+        else discord.Color.gold(),
     )
-    known_ids = record['known_ids'].split(",")
-    known_names = record['known_names'].split(",")
-    known_nations = [natify(nation) for nation in record['known_nations'].split(",")]
-    evidence = record['evidence'].split(",")
+    known_ids = record["known_ids"].split(",")
+    known_names = record["known_names"].split(",")
+    known_nations = [natify(nation) for nation in record["known_nations"].split(",")]
+    evidence = record["evidence"].split(",")
     embed.add_field(
         name="Known IDs",
         value="\n".join(known_ids),
@@ -65,7 +70,6 @@ def error_embed() -> discord.Embed:
 
 
 class FlexibleWLModal(discord.ui.Modal, title="Update Watchlist Entry"):
-
     def __init__(self, bot: Bloo, edit_mode: str, name: str):
         super().__init__(timeout=None)
         self.bot = bot
@@ -151,8 +155,9 @@ class FlexibleWLModal(discord.ui.Modal, title="Update Watchlist Entry"):
         elif self.edit_mode == "evidence":
             evidence = self.children[0].value.split("\n")
             evidence = [evidence_item.strip() for evidence_item in evidence]
-            evidence = [evidence_item for evidence_item in evidence if
-                        evidence_item != ""]  # I said a little trickier, not a lot trickier
+            evidence = [
+                evidence_item for evidence_item in evidence if evidence_item != ""
+            ]  # I said a little trickier, not a lot trickier
             evidence = ",".join(evidence)
             await self.bot.execute(
                 "UPDATE watchlist SET evidence = $1 WHERE primary_name = $2",
@@ -165,7 +170,6 @@ class FlexibleWLModal(discord.ui.Modal, title="Update Watchlist Entry"):
 
 
 class SearchBox(discord.ui.Modal, title="Search"):
-
     def __init__(self, bot: Bloo, message: discord.Message):
         super().__init__(timeout=None)
         self.bot = bot
@@ -181,6 +185,16 @@ class SearchBox(discord.ui.Modal, title="Search"):
         # Determine what the user is searching for
         await interaction.response.defer(thinking=True)
         query = self.query.value
+        # We are querying from the database! Sanitize this motherfucker! We're using a regex to ensure that the only
+        # characters that can be in the search are alphanumeric. Suppress the inspection for this statement because
+        # if the cog has loaded, there is a properly compiled regex pattern -- see setup() for the pattern.
+        # noinspection PyTypeChecker
+        if not re.match(BE_SAFE, query):
+            await interaction.followup.send(
+                "Your search term was invalid. Please try a different term.",
+                ephemeral=True,
+            )
+
         try:
             int(query)
             # If the query is an integer, it's a discord ID
@@ -196,7 +210,7 @@ class SearchBox(discord.ui.Modal, title="Search"):
             found = False
             record = None
             for item in watchlist:
-                ids = item['known_ids'].split(",")
+                ids = item["known_ids"].split(",")
                 if query in ids:
                     found = True
                     record = item
@@ -208,7 +222,7 @@ class SearchBox(discord.ui.Modal, title="Search"):
                 embed = watchlist_embed(record)
                 await interaction.followup.send(
                     f"Your search for `{query}` returned the following result:",
-                    embed=embed
+                    embed=embed,
                 )
             else:
                 await interaction.followup.send(
@@ -236,7 +250,7 @@ class SearchBox(discord.ui.Modal, title="Search"):
                     embed = watchlist_embed(record[0])
                     await interaction.followup.send(
                         f"Your search for `{query.strip('%')}` returned the following result:",
-                        embed=embed
+                        embed=embed,
                     )
                 else:
                     watchlistitems = []
@@ -246,12 +260,11 @@ class SearchBox(discord.ui.Modal, title="Search"):
                     await interaction.followup.send(
                         f"Your search for `{query.strip('%')}` returned {count} results:",
                         embed=watchlistitems[0],
-                        view=PaginateWL(self.bot, watchlistitems)
+                        view=PaginateWL(self.bot, watchlistitems),
                     )
 
 
 class WatchlistAddModal(discord.ui.Modal, title="Add to Watchlist"):
-
     def __init__(self, bot: Bloo, name: str):
         super().__init__(timeout=None)
         self.bot = bot
@@ -316,8 +329,9 @@ class WatchlistAddModal(discord.ui.Modal, title="Add to Watchlist"):
         # we join them all into a comma separated list.
         evidence = self.evidence.value.split("\n")
         evidence = [evidence_item.strip() for evidence_item in evidence]
-        evidence = [evidence_item for evidence_item in evidence if
-                    evidence_item != ""]  # I said a little trickier, not a lot trickier
+        evidence = [
+            evidence_item for evidence_item in evidence if evidence_item != ""
+        ]  # I said a little trickier, not a lot trickier
         evidence = ",".join(evidence)
 
         # Insert the record into the database
@@ -340,7 +354,6 @@ class WatchlistAddModal(discord.ui.Modal, title="Add to Watchlist"):
 
 
 class PaginateWL(discord.ui.View):
-
     def __init__(self, bot: Bloo, watchlistitems: List[discord.Embed]):
         super().__init__()
         self.current_page = 0
@@ -353,7 +366,9 @@ class PaginateWL(discord.ui.View):
         custom_id="previous_page",
         emoji="⬅️",
     )
-    async def previous_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def previous_page(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         if self.current_page != 0:
             self.current_page = len(self.watchlistitems) - 1
         else:
@@ -368,7 +383,9 @@ class PaginateWL(discord.ui.View):
         custom_id="next_page",
         emoji="➡️",
     )
-    async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def next_page(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         if self.current_page != len(self.watchlistitems) - 1:
             self.current_page += 1
         else:
@@ -404,13 +421,13 @@ class PaginateWL(discord.ui.View):
         custom_id="staff_options",
         emoji="🛠️",
     )
-    async def staff_options(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def staff_options(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         nsl_staff = interaction.guild.get_role(414822801397121035)
         if nsl_staff not in interaction.user.roles:
             self.staff_options.disabled = True
-            await interaction.response.edit_message(
-                view=self
-            )
+            await interaction.response.edit_message(view=self)
             await interaction.followup.send(
                 "You do not have permission to use this button.",
                 ephemeral=True,
@@ -422,7 +439,6 @@ class PaginateWL(discord.ui.View):
 
 
 class NSLStaffWLButtons(discord.ui.View):
-
     def __init__(self, bot: Bloo, original: discord.Member | discord.User):
         super().__init__()
         self.bot = bot
@@ -442,9 +458,15 @@ class NSLStaffWLButtons(discord.ui.View):
         style=discord.ButtonStyle.blurple,
         custom_id="edit_reasoning",
     )
-    async def edit_reasoning(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def edit_reasoning(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         await interaction.response.send_modal(
-            FlexibleWLModal(self.bot, "reasoning", interaction.message.embeds[0].title.split("—")[1].strip())
+            FlexibleWLModal(
+                self.bot,
+                "reasoning",
+                interaction.message.embeds[0].title.split("—")[1].strip(),
+            )
         )
 
     @discord.ui.button(
@@ -452,9 +474,15 @@ class NSLStaffWLButtons(discord.ui.View):
         style=discord.ButtonStyle.blurple,
         custom_id="edit_ids",
     )
-    async def edit_ids(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def edit_ids(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         await interaction.response.send_modal(
-            FlexibleWLModal(self.bot, "ids", interaction.message.embeds[0].title.split("—")[1].strip())
+            FlexibleWLModal(
+                self.bot,
+                "ids",
+                interaction.message.embeds[0].title.split("—")[1].strip(),
+            )
         )
 
     @discord.ui.button(
@@ -462,9 +490,15 @@ class NSLStaffWLButtons(discord.ui.View):
         style=discord.ButtonStyle.blurple,
         custom_id="edit_names",
     )
-    async def edit_names(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def edit_names(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         await interaction.response.send_modal(
-            FlexibleWLModal(self.bot, "names", interaction.message.embeds[0].title.split("—")[1].strip())
+            FlexibleWLModal(
+                self.bot,
+                "names",
+                interaction.message.embeds[0].title.split("—")[1].strip(),
+            )
         )
 
     @discord.ui.button(
@@ -472,9 +506,15 @@ class NSLStaffWLButtons(discord.ui.View):
         style=discord.ButtonStyle.blurple,
         custom_id="edit_nations",
     )
-    async def edit_nations(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def edit_nations(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         await interaction.response.send_modal(
-            FlexibleWLModal(self.bot, "nations", interaction.message.embeds[0].title.split("—")[1].strip())
+            FlexibleWLModal(
+                self.bot,
+                "nations",
+                interaction.message.embeds[0].title.split("—")[1].strip(),
+            )
         )
 
     @discord.ui.button(
@@ -482,9 +522,15 @@ class NSLStaffWLButtons(discord.ui.View):
         style=discord.ButtonStyle.blurple,
         custom_id="edit_evidence",
     )
-    async def edit_evidence(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def edit_evidence(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         await interaction.response.send_modal(
-            FlexibleWLModal(self.bot, "evidence", interaction.message.embeds[0].title.split("—")[1].strip())
+            FlexibleWLModal(
+                self.bot,
+                "evidence",
+                interaction.message.embeds[0].title.split("—")[1].strip(),
+            )
         )
 
     @discord.ui.button(
@@ -522,9 +568,7 @@ class Watchlist(commands.Cog):
     def __init__(self, bot: Bloo):
         self.bot = bot
 
-    @app_commands.command(
-        description="View the Watchlist"
-    )
+    @app_commands.command(description="View the Watchlist")
     @app_commands.guilds(414822188273762306)
     @app_commands.default_permissions(administrator=True)
     async def watchlist(self, interaction: discord.Interaction):
@@ -534,21 +578,16 @@ class Watchlist(commands.Cog):
             watchlistitems.append(watchlist_embed(item))
 
         await interaction.response.send_message(
-            embed=watchlistitems[0],
-            view=PaginateWL(self.bot, watchlistitems)
+            embed=watchlistitems[0], view=PaginateWL(self.bot, watchlistitems)
         )
 
-    @app_commands.command(
-        description="Add a member to the Watchlist"
-    )
+    @app_commands.command(description="Add a member to the Watchlist")
     @app_commands.guilds(414822188273762306)
     @app_commands.default_permissions(ban_members=True)
     async def wl_add(self, interaction: discord.Interaction, name: str):
         await interaction.response.send_modal(WatchlistAddModal(self.bot, name))
 
-    @app_commands.command(
-        description="Add a spammer to the Watchlist"
-    )
+    @app_commands.command(description="Add a spammer to the Watchlist")
     @app_commands.guilds(414822188273762306)
     @app_commands.default_permissions(ban_members=True)
     async def wl_spammer(self, interaction: discord.Interaction, id: str):
@@ -569,4 +608,6 @@ class Watchlist(commands.Cog):
 
 
 async def setup(bot: Bloo):
+    global BE_SAFE
+    BE_SAFE = re.compile(r"[^a-zA-Z0-9 ]", re.IGNORECASE)
     await bot.add_cog(Watchlist(bot))
