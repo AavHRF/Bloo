@@ -64,11 +64,20 @@ class Bloo(commands.Bot):
             # It might be worth improving at some point though if startup times become an issue, but
             # that would only likely happen if the watchlist becomes very large. (Unlikely)
             for discord_id in record["known_ids"].split(","):
-                discord_ids.add(int(discord_id))
+                try:
+                    discord_ids.add(int(discord_id))
+                except ValueError:
+                    pass
             for nation_name in record["known_nations"].split(","):
-                nation_names.add(nation_name)
+                try:
+                    nation_names.add(nation_name)
+                except ValueError:
+                    pass
             for known_name in record["known_names"].split(","):
-                known_names.add(known_name)
+                try:
+                    known_names.add(known_name)
+                except ValueError:
+                    pass
 
         self.watchlist = {
             "discord_ids": discord_ids,
