@@ -192,9 +192,10 @@ class VerificationView(discord.ui.View):
 
 
 class SettingsView(discord.ui.View):
-    def __init__(self, bot: Bloo):
+    def __init__(self, bot: Bloo, embed: discord.Embed):
         super().__init__()
         self.bot = bot
+
 
     @discord.ui.button(
         label="Verification Settings",
