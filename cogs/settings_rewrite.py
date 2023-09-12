@@ -45,10 +45,22 @@ class NSVRoleView(discord.ui.View):
         for child in self.children:
             child.disabled = True
         self.go_back.disabled = False
-        guest = self.guest.values[0].id if self.guest.values else 0
-        resident = self.resident.values[0].id if self.resident.values else 0
-        wa_resident = self.wa_resident.values[0].id if self.wa_resident.values else 0
-        verified = self.verified.values[0].id if self.verified.values else 0
+        try:
+            guest = self.guest.values[0].id if self.guest.values else self.current_settings["guest_role"] if self.current_settings else 0
+        except IndexError:
+            guest = 0
+        try:
+            resident = self.resident.values[0].id if self.resident.values else self.current_settings["resident_role"] if self.current_settings else 0
+        except IndexError:
+            resident = 0
+        try:
+            wa_resident = self.wa_resident.values[0].id if self.wa_resident.values else self.current_settings["wa_resident_role"] if self.current_settings else 0
+        except IndexError:
+            wa_resident = 0
+        try:
+            verified = self.verified.values[0].id if self.verified.values else self.current_settings["verified_role"] if self.current_settings else 0
+        except IndexError:
+            verified = 0
 
         if not self.current_settings:
             await self.bot.execute(
@@ -79,22 +91,22 @@ class NSVRoleView(discord.ui.View):
         embed.set_field_at(
             2,
             name="Verified Role",
-            value=self.verified.values[0].mention
+            value=self.verified.values[0].mention if self.verified.values else "None"
         )
         embed.set_field_at(
             3,
             name="Guest Role",
-            value=self.guest.values[0].mention
+            value=self.guest.values[0].mention if self.guest.values else "None"
         )
         embed.set_field_at(
             4,
             name="Resident Role",
-            value=self.resident.values[0].mention
+            value=self.resident.values[0].mention if self.resident.values else "None"
         )
         embed.set_field_at(
             5,
             name="WA Resident Role",
-            value=self.wa_resident.values[0].mention
+            value=self.wa_resident.values[0].mention if self.wa_resident.values else "None"
         )
         await interaction.response.edit_message(embed=embed, view=self)
 
