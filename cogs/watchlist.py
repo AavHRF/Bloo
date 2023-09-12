@@ -355,11 +355,27 @@ class WatchlistAddModal(discord.ui.Modal, title="Add to Watchlist"):
 
 
 class PaginateWL(discord.ui.View):
-    def __init__(self, bot: Bloo, watchlistitems: List[discord.Embed]):
+    def __init__(self, bot: Bloo, watchlistitems: List[discord.Embed], invoker: discord.Member | discord.User = None):
         super().__init__()
         self.current_page = 0
         self.bot = bot
         self.watchlistitems = watchlistitems
+        self.invoker = invoker
+        self.nsl_staff = bot.get_guild(414822188273762306).get_role(414822801397121035)
+
+        if self.invoker:
+            if self.nsl_staff not in self.invoker.roles:
+                self.staff_options.disabled = True
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if self.invoker:
+            if interaction.user.id != self.invoker.id:
+                await interaction.response.send_message(
+                    "You cannot use this button.",
+                    ephemeral=True,
+                )
+                return False
+        return True
 
     @discord.ui.button(
         label="Previous",
@@ -368,7 +384,7 @@ class PaginateWL(discord.ui.View):
         emoji="⬅️",
     )
     async def previous_page(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         if self.current_page != 0:
             self.current_page = len(self.watchlistitems) - 1
@@ -385,7 +401,7 @@ class PaginateWL(discord.ui.View):
         emoji="➡️",
     )
     async def next_page(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         if self.current_page != len(self.watchlistitems) - 1:
             self.current_page += 1
@@ -423,7 +439,7 @@ class PaginateWL(discord.ui.View):
         emoji="🛠️",
     )
     async def staff_options(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         nsl_staff = interaction.guild.get_role(414822801397121035)
         if nsl_staff not in interaction.user.roles:
@@ -460,7 +476,7 @@ class NSLStaffWLButtons(discord.ui.View):
         custom_id="edit_reasoning",
     )
     async def edit_reasoning(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         await interaction.response.send_modal(
             FlexibleWLModal(
@@ -476,7 +492,7 @@ class NSLStaffWLButtons(discord.ui.View):
         custom_id="edit_ids",
     )
     async def edit_ids(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         await interaction.response.send_modal(
             FlexibleWLModal(
@@ -492,7 +508,7 @@ class NSLStaffWLButtons(discord.ui.View):
         custom_id="edit_names",
     )
     async def edit_names(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         await interaction.response.send_modal(
             FlexibleWLModal(
@@ -508,7 +524,7 @@ class NSLStaffWLButtons(discord.ui.View):
         custom_id="edit_nations",
     )
     async def edit_nations(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         await interaction.response.send_modal(
             FlexibleWLModal(
@@ -524,7 +540,7 @@ class NSLStaffWLButtons(discord.ui.View):
         custom_id="edit_evidence",
     )
     async def edit_evidence(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+            self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         await interaction.response.send_modal(
             FlexibleWLModal(
