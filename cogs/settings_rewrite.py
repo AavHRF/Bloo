@@ -111,26 +111,35 @@ class NSVRoleView(discord.ui.View):
             self.current_settings = await self.bot.fetch(
                 "SELECT * FROM nsv_settings WHERE guild_id = $1", interaction.guild.id
             )
+            self.current_settings = self.current_settings[0]
         embed = interaction.message.embeds[0]
         embed.set_field_at(
             2,
             name="Verified Role",
-            value=self.current_settings["verified_role"].mention if self.current_settings["verified_role"] != 0 else "None"
+            value=interaction.guild.get_role(
+                self.current_settings["verified_role"]
+            ).mention if self.current_settings["verified_role"] != 0 else "None"
         )
         embed.set_field_at(
             3,
             name="Guest Role",
-            value=self.current_settings["guest_role"].mention if self.current_settings["guest_role"] != 0 else "None"
+            value=interaction.guild.get_role(
+                self.current_settings["guest_role"]
+            ).mention if self.current_settings["guest_role"] != 0 else "None"
         )
         embed.set_field_at(
             4,
             name="Resident Role",
-            value=self.current_settings["resident_role"].mention if self.current_settings["resident_role"] != 0 else "None"
+            value=interaction.guild.get_role(
+                self.current_settings["resident_role"]
+            ).mention if self.current_settings["resident_role"] != 0 else "None"
         )
         embed.set_field_at(
             5,
             name="WA Resident Role",
-            value=self.current_settings["wa_resident_role"].mention if self.current_settings["wa_resident_role"] != 0 else "None"
+            value=interaction.guild.get_role(
+                self.current_settings["wa_resident_role"]
+            ).mention if self.current_settings["wa_resident_role"] != 0 else "None"
         )
         await interaction.response.edit_message(embed=embed, view=self)
 
