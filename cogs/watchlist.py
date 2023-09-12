@@ -610,5 +610,5 @@ class Watchlist(commands.Cog):
 
 async def setup(bot: Bloo):
     global BE_SAFE
-    BE_SAFE = re.compile(r"[^a-zA-Z0-9 ]", re.IGNORECASE)
+    BE_SAFE = re.compile(r"[\W\D]", re.IGNORECASE)
     await bot.add_cog(Watchlist(bot))
