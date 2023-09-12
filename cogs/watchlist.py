@@ -191,7 +191,7 @@ class SearchBox(discord.ui.Modal, title="Search"):
         # noinspection PyTypeChecker
         if re.match(BE_SAFE, query):
             await interaction.followup.send(
-                "Your search term was invalid. Please try a different term.",
+                f"Your search term of `{query}` was invalid. Please try a different term.",
                 ephemeral=True,
             )
             return
@@ -610,5 +610,5 @@ class Watchlist(commands.Cog):
 
 async def setup(bot: Bloo):
     global BE_SAFE
-    BE_SAFE = re.compile(r"[\W\D]", re.IGNORECASE)
+    BE_SAFE = re.compile(r"[\W]", re.IGNORECASE)
     await bot.add_cog(Watchlist(bot))
