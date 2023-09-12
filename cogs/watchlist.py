@@ -28,7 +28,8 @@ def natify(item: str) -> str:
 def watchlist_embed(record: asyncpg.Record) -> discord.Embed:
     embed = discord.Embed(
         title=f"WATCHLIST — {record['primary_name']}",
-        description=f"**Reason for Watchlist Addition:**\n {record['reasoning']}\n"
+        description=f"**Reason for Watchlist Addition:**\n {record['reasoning']}\n",
+        color=discord.Color.red() if "spammer" in record['reasoning'].lower() else discord.Color.gold(),
     )
     known_ids = record['known_ids'].split(",")
     known_names = record['known_names'].split(",")
