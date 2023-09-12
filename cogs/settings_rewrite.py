@@ -6,6 +6,30 @@ from framework.bot import Bloo
 from typing import List, Optional
 
 
+def main_settings() -> discord.Embed:
+    embed = discord.Embed(
+        title="Settings",
+        description="Welcome to Bloo! Configure your settings here.",
+        color=discord.Color.random(),
+    )
+    embed.add_field(
+        name=":white_check_mark: Verification Settings",
+        value="Change settings for the Verification module.",
+        inline=False,
+    )
+    embed.add_field(
+        name=":gear: Guild Settings",
+        value="Change settings for the guild.",
+        inline=False,
+    )
+    embed.add_field(
+        name=":wave: Welcome Settings",
+        value="Change settings for the Welcome module.",
+        inline=False,
+    )
+    return embed
+
+
 class Prompt(discord.ui.Modal, title="Bloo Configuration"):
 
     def __init__(self, bot: Bloo, mode: str, current_settings: Optional[List[asyncpg.Record]] = None):
@@ -452,9 +476,22 @@ class WelcomeView(discord.ui.View):
             )
             await interaction.response.edit_message(embed=embed, view=self)
 
+    @discord.ui.button(
+        label="Go Back",
+        style=discord.ButtonStyle.secondary,
+        custom_id="go_back",
+    )
+    async def go_back(
+            self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        await interaction.response.edit_message(
+            embed=main_settings(),
+            view=SettingsView(self.bot),
+        )
+
 
 class SettingsView(discord.ui.View):
-    def __init__(self, bot: Bloo, embed: discord.Embed):
+    def __init__(self, bot: Bloo):
         super().__init__()
         self.bot = bot
 
@@ -600,28 +637,8 @@ class RewrittenSettings(commands.Cog):
         description="Change settings for the bot",
     )
     async def settings(self, interaction: discord.Interaction):
-        embed = discord.Embed(
-            title="Settings",
-            description="Welcome to Bloo! Configure your settings here.",
-            color=discord.Color.random(),
-        )
-        embed.add_field(
-            name=":white_check_mark: Verification Settings",
-            value="Change settings for the Verification module.",
-            inline=False,
-        )
-        embed.add_field(
-            name=":gear: Guild Settings",
-            value="Change settings for the guild.",
-            inline=False,
-        )
-        embed.add_field(
-            name=":wave: Welcome Settings",
-            value="Change settings for the Welcome module.",
-            inline=False,
-        )
         await interaction.response.send_message(
-            embed=embed, view=SettingsView(self.bot, embed), ephemeral=True
+            embed=main_settings(), view=SettingsView(self.bot), ephemeral=True
         )
 
 
