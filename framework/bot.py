@@ -20,6 +20,13 @@ class Bloo(commands.Bot):
         self.config = json.load(open("config.json"))
         self.session = None
         self.limiter = AsyncLimiter(25, 30)
+        """
+        The watchlist is a dictionary with the following keys:
+        - discord_ids: Set[int]
+        - nation_names: Set[str]
+        - known_names: Set[str]
+        """
+        self.watchlist = {}
 
     async def setup_hook(self) -> None:
         self.pool = await asyncpg.create_pool(
@@ -27,7 +34,7 @@ class Bloo(commands.Bot):
         )
         self.session = aiohttp.ClientSession(
             headers={
-                "User-Agent": "Bloo NSV // v.1.0.0 // Owned by nation=united_calanworie"
+                "User-Agent": "Bloo NSV // v.1.4.0 // Owned by nation=united_calanworie"
             }
         )
         with open("tables.sql") as f:
@@ -45,7 +52,32 @@ class Bloo(commands.Bot):
 
         self.scam_domains = json.load(open("scams.json"))["domains"]
 
-    async def fetch(self, query: str, *args) -> List[asyncpg.Record] | asyncpg.Record:
+        watchlist = await self.fetch("SELECT * FROM watchlist")
+        discord_ids = set()
+        nation_names = set()
+        known_names = set()
+        for record in watchlist:
+            # TODO: Make this more efficient. Not a top priority as this only runs once on startup.
+            # During bot runtime, the watchlist is stored in memory and persisted to the database by
+            # the watchlist cog. This is only used to load the watchlist into memory on startup, and
+            # therefore can suffer some performance hits for the sake of quick-and-dirty functionality.
+            # It might be worth improving at some point though if startup times become an issue, but
+            # that would only likely happen if the watchlist becomes very large. (Unlikely)
+            for discord_id in record["known_ids"].split(","):
+                discord_ids.add(int(discord_id))
+            for nation_name in record["known_nations"].split(","):
+                nation_names.add(nation_name)
+            for known_name in record["known_names"].split(","):
+                known_names.add(known_name)
+
+        self.watchlist = {
+            "discord_ids": discord_ids,
+            "nation_names": nation_names,
+            "known_names": known_names,
+        }
+
+    async def fetch(self, query: str, *args) -> List[asyncpg.Record]:
+        con: asyncpg.Connection
         async with self.pool.acquire() as con:
             return await con.fetch(query, *args)
 
