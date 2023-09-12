@@ -702,8 +702,10 @@ class GuildSettingsView(discord.ui.View):
             0,
             interaction.guild.id,
         )
-        self.list_settings = None
-        self.internal_settings = None
+        self.list_settings = await self.bot.fetch(
+            "SELECT * FROM guild_settings WHERE guild_id = $1", interaction.guild.id
+        )
+        self.internal_settings = self.list_settings[0]
         embed = interaction.message.embeds[0]
         embed.set_field_at(
             0,
