@@ -550,7 +550,7 @@ class Watchlist(commands.Cog):
     )
     @app_commands.guilds(414822188273762306)
     @app_commands.default_permissions(ban_members=True)
-    async def wl_spammer(self, interaction: discord.Interaction, id: int):
+    async def wl_spammer(self, interaction: discord.Interaction, id: str):
         await self.bot.execute(
             "INSERT INTO watchlist (primary_name, reasoning, known_ids, known_names, known_nations, evidence, date_added) VALUES ($1, $2, $3, $4, $5, $6, $7)",
             id,
