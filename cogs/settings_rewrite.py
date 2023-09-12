@@ -91,22 +91,22 @@ class NSVRoleView(discord.ui.View):
         embed.set_field_at(
             2,
             name="Verified Role",
-            value=self.verified.values[0].mention if self.verified.values else "None"
+            value=self.current_settings["verified_role"].mention if self.current_settings["verified_role"] != 0 else "None"
         )
         embed.set_field_at(
             3,
             name="Guest Role",
-            value=self.guest.values[0].mention if self.guest.values else "None"
+            value=self.current_settings["guest_role"].mention if self.current_settings["guest_role"] != 0 else "None"
         )
         embed.set_field_at(
             4,
             name="Resident Role",
-            value=self.resident.values[0].mention if self.resident.values else "None"
+            value=self.current_settings["resident_role"].mention if self.current_settings["resident_role"] != 0 else "None"
         )
         embed.set_field_at(
             5,
             name="WA Resident Role",
-            value=self.wa_resident.values[0].mention if self.wa_resident.values else "None"
+            value=self.current_settings["wa_resident_role"].mention if self.current_settings["wa_resident_role"] != 0 else "None"
         )
         await interaction.response.edit_message(embed=embed, view=self)
 
