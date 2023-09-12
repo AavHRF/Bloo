@@ -189,11 +189,12 @@ class SearchBox(discord.ui.Modal, title="Search"):
         # characters that can be in the search are alphanumeric. Suppress the inspection for this statement because
         # if the cog has loaded, there is a properly compiled regex pattern -- see setup() for the pattern.
         # noinspection PyTypeChecker
-        if not re.match(BE_SAFE, query):
+        if re.match(BE_SAFE, query):
             await interaction.followup.send(
                 "Your search term was invalid. Please try a different term.",
                 ephemeral=True,
             )
+            return
 
         try:
             int(query)
