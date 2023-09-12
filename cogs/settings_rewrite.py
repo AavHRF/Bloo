@@ -67,6 +67,7 @@ class VerificationView(discord.ui.View):
         label="Enable/Disable Verification",
         style=discord.ButtonStyle.danger,
         custom_id="verification_toggle",
+        emoji="🎛️",
     )
     async def verification_toggle(self, interaction: discord.Interaction, button: discord.ui.Button):
         pass
@@ -75,6 +76,7 @@ class VerificationView(discord.ui.View):
         label="Set Verification Message",
         style=discord.ButtonStyle.blurple,
         custom_id="verification_message",
+        emoji="✉️",
     )
     async def verification_message(self, interaction: discord.Interaction, button: discord.ui.Button):
         pass
@@ -83,6 +85,7 @@ class VerificationView(discord.ui.View):
         label="Set Roles",
         style=discord.ButtonStyle.blurple,
         custom_id="verification_roles",
+        emoji="👥",
     )
     async def verification_roles(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.edit_message(view=NSVRoleView(self.bot))
@@ -98,7 +101,7 @@ class SettingsView(discord.ui.View):
         label="Verification Settings",
         style=discord.ButtonStyle.blurple,
         custom_id="verification_settings",
-        # emoji=discord.PartialEmoji.from_str("white_check_mark"),
+        emoji="✅",
     )
     async def verification_settings(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)  # Defer the response in case the database locks up
@@ -126,25 +129,24 @@ class SettingsView(discord.ui.View):
             )
             embed.add_field(
                 name="Region",
-                value=nsv_settings[0]["region"],
+                value=nsv_settings[0]["region"].replace("_", " ").title(),
             )
             embed.add_field(
                 name="Verified Role",
-                value=interaction.guild.get_role(nsv_settings[0]["verified_role"]).mention if nsv_settings[0]["verified_role"] else "None",
+                value=interaction.guild.get_role(nsv_settings[0]["verified_role"]).mention if nsv_settings[0]["verified_role"] != 0 else "None",
             )
             embed.add_field(
                 name="Guest Role",
-                value=interaction.guild.get_role(nsv_settings[0]["guest_role"]).mention if nsv_settings[0]["guest_role"] else "None",
+                value=interaction.guild.get_role(nsv_settings[0]["guest_role"]).mention if nsv_settings[0]["guest_role"] != 0 else "None",
             )
             embed.add_field(
                 name="Resident Role",
-                value=interaction.guild.get_role(nsv_settings[0]["resident_role"]).mention if nsv_settings[0]["resident_role"] else "None",
+                value=interaction.guild.get_role(nsv_settings[0]["resident_role"]).mention if nsv_settings[0]["resident_role"] != 0 else "None",
             )
             embed.add_field(
                 name="WA Resident Role",
-                value=interaction.guild.get_role(nsv_settings[0]["wa_resident_role"]).mention if nsv_settings[0]["wa_resident_role"] else "None",
+                value=interaction.guild.get_role(nsv_settings[0]["wa_resident_role"]).mention if nsv_settings[0]["wa_resident_role"] != 0 else "None",
             )
-
 
             await interaction.followup.edit_message(
                 message_id=interaction.message.id,
@@ -157,7 +159,7 @@ class SettingsView(discord.ui.View):
         label="Guild Settings",
         style=discord.ButtonStyle.blurple,
         custom_id="guild_settings",
-        # emoji=discord.PartialEmoji.from_str("gear"),
+        emoji="⚙️",
     )
     async def guild_settings(self, interaction: discord.Interaction, button: discord.ui.Button):
         guild_settings = await self.bot.fetch(
@@ -169,7 +171,7 @@ class SettingsView(discord.ui.View):
         label="Welcome Settings",
         style=discord.ButtonStyle.blurple,
         custom_id="welcome_settings",
-        # emoji=discord.PartialEmoji.from_str("wave"),
+        emoji="👋",
     )
     async def welcome_settings(self, interaction: discord.Interaction, button: discord.ui.Button):
         welcome_settings = await self.bot.fetch(
