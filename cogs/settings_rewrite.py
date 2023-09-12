@@ -578,7 +578,7 @@ class SettingsView(discord.ui.View):
         )
         embed.add_field(
             name="Welcomes Enabled",
-            value="Enabled" if welcome_settings[0]["enabled"] else "Disabled",
+            value="Enabled" if welcome_settings[0]["welcome_enabled"] else "Disabled",
         )
         embed.add_field(
             name="Ping on Welcome",
