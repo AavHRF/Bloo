@@ -7,13 +7,15 @@ from typing import List, Optional
 
 
 class NSVRoleView(discord.ui.View):
-
-    def __init__(self, bot: Bloo):
+    def __init__(self, bot: Bloo, current_settings: Optional[List[asyncpg.Record]] = None):
         super().__init__()
         self.bot = bot
+        self.current_settings = current_settings[0] if current_settings else None
 
     @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Verified Role", row=0)
-    async def verified(self, interaction: discord.Interaction, select: discord.ui.Select):
+    async def verified(
+        self, interaction: discord.Interaction, select: discord.ui.Select
+    ):
         await interaction.response.defer()
 
     @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Guest Role", row=1)
@@ -21,11 +23,15 @@ class NSVRoleView(discord.ui.View):
         await interaction.response.defer()
 
     @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Resident Role", row=2)
-    async def resident(self, interaction: discord.Interaction, select: discord.ui.Select):
+    async def resident(
+        self, interaction: discord.Interaction, select: discord.ui.Select
+    ):
         await interaction.response.defer()
 
     @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="WA Resident Role", row=3)
-    async def wa_resident(self, interaction: discord.Interaction, select: discord.ui.Select):
+    async def wa_resident(
+        self, interaction: discord.Interaction, select: discord.ui.Select
+    ):
         await interaction.response.defer()
 
     @discord.ui.button(
@@ -33,15 +39,73 @@ class NSVRoleView(discord.ui.View):
         style=discord.ButtonStyle.blurple,
         custom_id="save_roles",
     )
-    async def save_roles(self, interaction: discord.Interaction, button: discord.ui.Button):
-        pass
+    async def save_roles(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        for child in self.children:
+            child.disabled = True
+        self.go_back.disabled = False
+        guest = self.guest.values[0].id if self.guest.values else 0
+        resident = self.resident.values[0].id if self.resident.values else 0
+        wa_resident = self.wa_resident.values[0].id if self.wa_resident.values else 0
+        verified = self.verified.values[0].id if self.verified.values else 0
+
+        if not self.current_settings:
+            await self.bot.execute(
+                "INSERT INTO nsv_settings (guild_id, guest_role, resident_role, wa_resident_role, verified_role) VALUES ($1, $2, $3, $4, $5)",
+                interaction.guild.id,
+                guest,
+                resident,
+                wa_resident,
+                verified,
+            )
+            self.current_settings = await self.bot.fetch(
+                "SELECT * FROM nsv_settings WHERE guild_id = $1", interaction.guild.id
+            )
+            self.current_settings = self.current_settings[0]
+        else:
+            await self.bot.execute(
+                "UPDATE nsv_settings SET guest_role = $1, resident_role = $2, wa_resident_role = $3, verified_role = $4 WHERE guild_id = $5",
+                guest,
+                resident,
+                wa_resident,
+                verified,
+                interaction.guild.id,
+            )
+            self.current_settings = await self.bot.fetch(
+                "SELECT * FROM nsv_settings WHERE guild_id = $1", interaction.guild.id
+            )
+        embed = interaction.message.embeds[0]
+        embed.set_field_at(
+            2,
+            name="Verified Role",
+            value=self.verified.values[0].mention
+        )
+        embed.set_field_at(
+            3,
+            name="Guest Role",
+            value=self.guest.values[0].mention
+        )
+        embed.set_field_at(
+            4,
+            name="Resident Role",
+            value=self.resident.values[0].mention
+        )
+        embed.set_field_at(
+            5,
+            name="WA Resident Role",
+            value=self.wa_resident.values[0].mention
+        )
+        await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(
         label="Cancel",
         style=discord.ButtonStyle.danger,
         custom_id="cancel_roles",
     )
-    async def cancel_roles(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def cancel_roles(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         for child in self.children:
             child.disabled = True
         self.go_back.disabled = False
@@ -52,13 +116,19 @@ class NSVRoleView(discord.ui.View):
         style=discord.ButtonStyle.secondary,
         custom_id="go_back",
     )
-    async def go_back(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(view=VerificationView(self.bot))
+    async def go_back(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        await interaction.response.edit_message(view=VerificationView(self.bot, interaction.message.embeds[0]))
 
 
 class VerificationView(discord.ui.View):
-
-    def __init__(self, bot: Bloo, embed: discord.Embed, current_settings: Optional[List[asyncpg.Record]] = None):
+    def __init__(
+        self,
+        bot: Bloo,
+        embed: discord.Embed,
+        current_settings: Optional[List[asyncpg.Record]] = None,
+    ):
         super().__init__()
         self.bot = bot
         self.embed = embed
@@ -70,7 +140,9 @@ class VerificationView(discord.ui.View):
         custom_id="verification_toggle",
         emoji="🎛️",
     )
-    async def verification_toggle(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def verification_toggle(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         if self.current_settings:
             await self.bot.execute(
                 "UPDATE nsv_settings SET force_verification = $1 WHERE guild_id = $2",
@@ -84,7 +156,9 @@ class VerificationView(discord.ui.View):
             self.embed.set_field_at(
                 0,
                 name="Forced Verification Status",
-                value="Enabled" if self.current_settings["force_verification"] else "Disabled",
+                value="Enabled"
+                if self.current_settings["force_verification"]
+                else "Disabled",
             )
             await interaction.response.edit_message(embed=self.embed, view=self)
 
@@ -100,7 +174,9 @@ class VerificationView(discord.ui.View):
         custom_id="verification_message",
         emoji="✉️",
     )
-    async def verification_message(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def verification_message(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         pass
 
     @discord.ui.button(
@@ -109,12 +185,13 @@ class VerificationView(discord.ui.View):
         custom_id="verification_roles",
         emoji="👥",
     )
-    async def verification_roles(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def verification_roles(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         await interaction.response.edit_message(view=NSVRoleView(self.bot))
 
 
 class SettingsView(discord.ui.View):
-
     def __init__(self, bot: Bloo):
         super().__init__()
         self.bot = bot
@@ -125,8 +202,12 @@ class SettingsView(discord.ui.View):
         custom_id="verification_settings",
         emoji="✅",
     )
-    async def verification_settings(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer(ephemeral=True)  # Defer the response in case the database locks up
+    async def verification_settings(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        await interaction.response.defer(
+            ephemeral=True
+        )  # Defer the response in case the database locks up
         nsv_settings = await self.bot.fetch(
             "SELECT * FROM nsv_settings WHERE guild_id = $1", interaction.guild.id
         )
@@ -138,7 +219,7 @@ class SettingsView(discord.ui.View):
             await interaction.followup.edit_message(
                 message_id=interaction.message.id,
                 embed=embed,
-                view=VerificationView(self.bot, embed, nsv_settings)
+                view=VerificationView(self.bot, embed, nsv_settings),
             )
         else:
             embed = discord.Embed(
@@ -147,7 +228,9 @@ class SettingsView(discord.ui.View):
             )
             embed.add_field(
                 name="Forced Verification Status",
-                value="Enabled" if nsv_settings[0]["force_verification"] else "Disabled",
+                value="Enabled"
+                if nsv_settings[0]["force_verification"]
+                else "Disabled",
             )
             embed.add_field(
                 name="Region",
@@ -155,25 +238,39 @@ class SettingsView(discord.ui.View):
             )
             embed.add_field(
                 name="Verified Role",
-                value=interaction.guild.get_role(nsv_settings[0]["verified_role"]).mention if nsv_settings[0]["verified_role"] != 0 else "None",
+                value=interaction.guild.get_role(
+                    nsv_settings[0]["verified_role"]
+                ).mention
+                if nsv_settings[0]["verified_role"] != 0
+                else "None",
             )
             embed.add_field(
                 name="Guest Role",
-                value=interaction.guild.get_role(nsv_settings[0]["guest_role"]).mention if nsv_settings[0]["guest_role"] != 0 else "None",
+                value=interaction.guild.get_role(nsv_settings[0]["guest_role"]).mention
+                if nsv_settings[0]["guest_role"] != 0
+                else "None",
             )
             embed.add_field(
                 name="Resident Role",
-                value=interaction.guild.get_role(nsv_settings[0]["resident_role"]).mention if nsv_settings[0]["resident_role"] != 0 else "None",
+                value=interaction.guild.get_role(
+                    nsv_settings[0]["resident_role"]
+                ).mention
+                if nsv_settings[0]["resident_role"] != 0
+                else "None",
             )
             embed.add_field(
                 name="WA Resident Role",
-                value=interaction.guild.get_role(nsv_settings[0]["wa_resident_role"]).mention if nsv_settings[0]["wa_resident_role"] != 0 else "None",
+                value=interaction.guild.get_role(
+                    nsv_settings[0]["wa_resident_role"]
+                ).mention
+                if nsv_settings[0]["wa_resident_role"] != 0
+                else "None",
             )
 
             await interaction.followup.edit_message(
                 message_id=interaction.message.id,
                 embed=embed,
-                view=VerificationView(self.bot, embed, nsv_settings)
+                view=VerificationView(self.bot, embed, nsv_settings),
             )
         pass
 
@@ -183,7 +280,9 @@ class SettingsView(discord.ui.View):
         custom_id="guild_settings",
         emoji="⚙️",
     )
-    async def guild_settings(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def guild_settings(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         guild_settings = await self.bot.fetch(
             "SELECT * FROM guild_settings WHERE guild_id = $1", interaction.guild.id
         )
@@ -195,7 +294,9 @@ class SettingsView(discord.ui.View):
         custom_id="welcome_settings",
         emoji="👋",
     )
-    async def welcome_settings(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def welcome_settings(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         welcome_settings = await self.bot.fetch(
             "SELECT * FROM welcome_settings WHERE guild_id = $1", interaction.guild.id
         )
@@ -203,7 +304,6 @@ class SettingsView(discord.ui.View):
 
 
 class RewrittenSettings(commands.Cog):
-
     def __init__(self, bot: Bloo):
         self.bot = bot
 
@@ -233,7 +333,9 @@ class RewrittenSettings(commands.Cog):
             value="Change settings for the Welcome module.",
             inline=False,
         )
-        await interaction.response.send_message(embed=embed, view=SettingsView(self.bot), ephemeral=True)
+        await interaction.response.send_message(
+            embed=embed, view=SettingsView(self.bot, embed), ephemeral=True
+        )
 
 
 async def setup(bot: Bloo):
