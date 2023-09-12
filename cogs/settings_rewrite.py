@@ -58,10 +58,11 @@ class NSVRoleView(discord.ui.View):
 
 class VerificationView(discord.ui.View):
 
-    def __init__(self, bot: Bloo, current_settings: Optional[List[asyncpg.Record]] = None):
+    def __init__(self, bot: Bloo, embed: discord.Embed, current_settings: Optional[List[asyncpg.Record]] = None):
         super().__init__()
         self.bot = bot
-        self.current_settings = current_settings
+        self.embed = embed
+        self.current_settings = current_settings[0] if current_settings else None
 
     @discord.ui.button(
         label="Enable/Disable Verification",
@@ -70,7 +71,25 @@ class VerificationView(discord.ui.View):
         emoji="🎛️",
     )
     async def verification_toggle(self, interaction: discord.Interaction, button: discord.ui.Button):
-        pass
+        if self.current_settings:
+            # await self.bot.execute(
+            #     "UPDATE nsv_settings SET force_verification = $1 WHERE guild_id = $2",
+            #     not self.current_settings["force_verification"],
+            #     interaction.guild.id,
+            # )
+            self.current_settings["force_verification"] = not self.current_settings["force_verification"]
+            self.embed.set_field_at(
+                0,
+                name="Forced Verification Status",
+                value="Enabled" if self.current_settings["force_verification"] else "Disabled",
+            )
+            await interaction.response.edit_message(embed=self.embed, view=self)
+
+        else:
+            await interaction.response.send_message(
+                "You need to set up your role settings first!",
+                ephemeral=True,
+            )
 
     @discord.ui.button(
         label="Set Verification Message",
@@ -151,7 +170,7 @@ class SettingsView(discord.ui.View):
             await interaction.followup.edit_message(
                 message_id=interaction.message.id,
                 embed=embed,
-                view=VerificationView(self.bot, nsv_settings)
+                view=VerificationView(self.bot, nsv_settings, embed)
             )
         pass
 
