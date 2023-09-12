@@ -46,19 +46,43 @@ class NSVRoleView(discord.ui.View):
             child.disabled = True
         self.go_back.disabled = False
         try:
-            guest = self.guest.values[0].id if self.guest.values else self.current_settings["guest_role"] if self.current_settings else 0
+            if self.guest.values:
+                guest = self.guest.values[0].id
+            else:
+                if self.current_settings:
+                    guest = self.current_settings["guest_role"]
+                else:
+                    guest = 0
         except IndexError:
             guest = 0
         try:
-            resident = self.resident.values[0].id if self.resident.values else self.current_settings["resident_role"] if self.current_settings else 0
+            if self.resident.values:
+                resident = self.resident.values[0].id
+            else:
+                if self.current_settings:
+                    resident = self.current_settings["resident_role"]
+                else:
+                    resident = 0
         except IndexError:
             resident = 0
         try:
-            wa_resident = self.wa_resident.values[0].id if self.wa_resident.values else self.current_settings["wa_resident_role"] if self.current_settings else 0
+            if self.wa_resident.values:
+                wa_resident = self.wa_resident.values[0].id
+            else:
+                if self.current_settings:
+                    wa_resident = self.current_settings["wa_resident_role"]
+                else:
+                    wa_resident = 0
         except IndexError:
             wa_resident = 0
         try:
-            verified = self.verified.values[0].id if self.verified.values else self.current_settings["verified_role"] if self.current_settings else 0
+            if self.verified.values:
+                verified = self.verified.values[0].id
+            else:
+                if self.current_settings:
+                    verified = self.current_settings["verified_role"]
+                else:
+                    verified = 0
         except IndexError:
             verified = 0
 
