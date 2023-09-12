@@ -188,7 +188,7 @@ class VerificationView(discord.ui.View):
     async def verification_roles(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
-        await interaction.response.edit_message(view=NSVRoleView(self.bot))
+        await interaction.response.edit_message(view=NSVRoleView(self.bot, self.current_settings))
 
 
 class SettingsView(discord.ui.View):
