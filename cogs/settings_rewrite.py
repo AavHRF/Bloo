@@ -682,11 +682,11 @@ class GuildSettingsView(discord.ui.View):
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(
-        label="Cancel",
-        style=discord.ButtonStyle.danger,
-        custom_id="cancel_roles",
+        label="Go Back",
+        style=discord.ButtonStyle.secondary,
+        custom_id="go_back",
     )
-    async def cancel_roles(
+    async def go_back(
             self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         await interaction.response.edit_message(embed=main_settings(), view=SettingsView(self.bot))
