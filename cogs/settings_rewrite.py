@@ -72,11 +72,11 @@ class VerificationView(discord.ui.View):
     )
     async def verification_toggle(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.current_settings:
-            # await self.bot.execute(
-            #     "UPDATE nsv_settings SET force_verification = $1 WHERE guild_id = $2",
-            #     not self.current_settings["force_verification"],
-            #     interaction.guild.id,
-            # )
+            await self.bot.execute(
+                "UPDATE nsv_settings SET force_verification = $1 WHERE guild_id = $2",
+                not self.current_settings["force_verification"],
+                interaction.guild.id,
+            )
             self.current_settings = await self.bot.fetch(
                 "SELECT * FROM nsv_settings WHERE guild_id = $1", interaction.guild.id
             )
