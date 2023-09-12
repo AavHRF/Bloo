@@ -586,7 +586,7 @@ class Watchlist(commands.Cog):
         self.bot = bot
 
     @app_commands.command(description="View the Watchlist")
-    @app_commands.guilds(414822188273762306, 280231120598073344)
+    @app_commands.guilds(*[414822188273762306, 280231120598073344])
     @app_commands.default_permissions(administrator=True)
     async def watchlist(self, interaction: discord.Interaction):
         watchlist = await self.bot.fetch("SELECT * FROM watchlist")
