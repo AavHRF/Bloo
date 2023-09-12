@@ -168,7 +168,8 @@ class VerificationView(discord.ui.View):
         super().__init__()
         self.bot = bot
         self.embed = embed
-        self.current_settings = current_settings[0] if current_settings else None
+        self.internal_settings = current_settings[0] if current_settings else None
+        self.list_settings = current_settings if current_settings else None
 
     @discord.ui.button(
         label="Enable/Disable Verification",
@@ -179,21 +180,21 @@ class VerificationView(discord.ui.View):
     async def verification_toggle(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
-        if self.current_settings:
+        if self.internal_settings:
             await self.bot.execute(
                 "UPDATE nsv_settings SET force_verification = $1 WHERE guild_id = $2",
-                not self.current_settings["force_verification"],
+                not self.internal_settings["force_verification"],
                 interaction.guild.id,
             )
-            self.current_settings = await self.bot.fetch(
+            self.list_settings = await self.bot.fetch(
                 "SELECT * FROM nsv_settings WHERE guild_id = $1", interaction.guild.id
             )
-            self.current_settings = self.current_settings[0]
+            self.internal_settings = self.list_settings[0]
             self.embed.set_field_at(
                 0,
                 name="Forced Verification Status",
                 value="Enabled"
-                if self.current_settings["force_verification"]
+                if self.internal_settings["force_verification"]
                 else "Disabled",
             )
             await interaction.response.edit_message(embed=self.embed, view=self)
@@ -224,7 +225,7 @@ class VerificationView(discord.ui.View):
     async def verification_roles(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
-        await interaction.response.edit_message(view=NSVRoleView(self.bot, self.current_settings))
+        await interaction.response.edit_message(view=NSVRoleView(self.bot, self.list_settings))
 
 
 class SettingsView(discord.ui.View):
