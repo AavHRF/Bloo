@@ -462,6 +462,49 @@ class WelcomeView(discord.ui.View):
     ):
         await interaction.response.send_modal(Prompt(self.bot, "welcome", self.list_settings))
 
+    @discord.ui.button(
+        label="Ping on Welcome",
+        style=discord.ButtonStyle.blurple,
+        custom_id="welcome_ping",
+        emoji="🔔",
+    )
+    async def welcome_ping(
+            self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        if self.internal_settings:
+            await self.bot.execute(
+                "UPDATE welcome_settings SET ping_on_join = $1 WHERE guild_id = $2",
+                not self.internal_settings["ping_on_join"],
+                interaction.guild.id,
+            )
+            self.list_settings = await self.bot.fetch(
+                "SELECT * FROM welcome_settings WHERE guild_id = $1", interaction.guild.id
+            )
+            self.internal_settings = self.list_settings[0]
+            embed = interaction.message.embeds[0]
+            embed.set_field_at(
+                3,
+                name="Ping on Welcome",
+                value="Enabled" if self.internal_settings["ping_on_join"] else "Disabled",
+            )
+            await interaction.response.edit_message(embed=embed, view=self)
+        else:
+            await self.bot.execute(
+                "INSERT INTO welcome_settings (guild_id, ping_on_join) VALUES ($1, $2)",
+                interaction.guild.id,
+                True,
+            )
+            self.list_settings = await self.bot.fetch(
+                "SELECT * FROM welcome_settings WHERE guild_id = $1", interaction.guild.id
+            )
+            self.internal_settings = self.list_settings[0]
+            embed = interaction.message.embeds[0]
+            embed.set_field_at(
+                3,
+                name="Ping on Welcome",
+                value="Enabled" if self.internal_settings["ping_on_join"] else "Disabled",
+            )
+
     @discord.ui.select(
         cls=discord.ui.ChannelSelect,
         channel_types=[discord.ChannelType.text],
