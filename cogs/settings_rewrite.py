@@ -830,28 +830,34 @@ class SettingsView(discord.ui.View):
         guild_settings = await self.bot.fetch(
             "SELECT * FROM guild_settings WHERE guild_id = $1", interaction.guild.id
         )
-        embed = discord.Embed(
-            title=":gear: Guild Settings",
-            description="Configure your guild settings here.",
-        )
-        embed.add_field(
-            name="Administrator Role",
-            value=interaction.guild.get_role(
-                guild_settings[0]["administrator_role"]
-            ).mention if guild_settings else "None",
-        )
-        embed.add_field(
-            name="Moderator Role",
-            value=interaction.guild.get_role(
-                guild_settings[0]["moderator_role"]
-            ).mention if guild_settings else "None",
-        )
-        embed.add_field(
-            name="Admin Channel",
-            value=interaction.guild.get_channel(
-                guild_settings[0]["admin_channel"]
-            ).mention if guild_settings else "None",
-        )
+        if guild_settings:
+            embed = discord.Embed(
+                title=":gear: Guild Settings",
+                description="Configure your guild settings here.",
+            )
+            embed.add_field(
+                name="Administrator Role",
+                value=interaction.guild.get_role(
+                    guild_settings[0]["administrator_role"]
+                ).mention if guild_settings[0]["administrator_role"] != 0 else "None",
+            )
+            embed.add_field(
+                name="Moderator Role",
+                value=interaction.guild.get_role(
+                    guild_settings[0]["moderator_role"]
+                ).mention if guild_settings[0]["moderator_role"] != 0 else "None",
+            )
+            embed.add_field(
+                name="Admin Channel",
+                value=interaction.guild.get_channel(
+                    guild_settings[0]["admin_channel"]
+                ).mention if guild_settings[0]["admin_channel"] != 0 else "None",
+            )
+        else:
+            embed = discord.Embed(
+                title=":gear: Guild Settings",
+                description="You seem to have no settings configured! Oh dear! Use the buttons below to get started.",
+            )
         await interaction.response.edit_message(
             embed=embed,
             view=GuildSettingsView(self.bot, guild_settings)
