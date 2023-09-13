@@ -363,9 +363,11 @@ class PaginateWL(discord.ui.View):
         self.invoker = invoker
         self.nsl_staff = bot.get_guild(414822188273762306).get_role(414822801397121035)
 
-        if self.invoker:
+        if isinstance(self.invoker, discord.Member):
             if self.nsl_staff not in self.invoker.roles:
                 self.staff_options.disabled = True
+        else:
+            self.staff_options.disabled = True
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if self.invoker:

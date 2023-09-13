@@ -931,6 +931,7 @@ class Settings(commands.Cog):
         name="settings",
         description="Change settings for the bot",
     )
+    @app_commands.guild_only()
     async def settings(self, interaction: discord.Interaction):
         await interaction.response.send_message(
             embed=main_settings(), view=SettingsView(self.bot), ephemeral=True

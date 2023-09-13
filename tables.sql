@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS nation_dump (
 );
 
 CREATE TABLE IF NOT EXISTS welcome_settings (
-    guild_id BIGINT,
+    guild_id BIGINT NOT NULL,
     welcome_channel BIGINT DEFAULT 0,
     welcome_enabled BOOLEAN NOT NULL DEFAULT FALSE,
     ping_on_join BOOLEAN NOT NULL DEFAULT FALSE,
