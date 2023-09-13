@@ -899,24 +899,42 @@ class SettingsView(discord.ui.View):
             title=":wave: Welcome Settings",
             description="Configure your welcome settings here.",
         )
-        embed.add_field(
-            name="Welcome Message",
-            value=welcome_settings[0]["embed_message"] if welcome_settings else "None",
-        )
-        embed.add_field(
-            name="Welcome Channel",
-            value=interaction.guild.get_channel(
-                welcome_settings[0]["welcome_channel"]
-            ).mention if welcome_settings[0]["welcome_channel"] != 0 else "None",
-        )
-        embed.add_field(
-            name="Welcomes Enabled",
-            value="Enabled" if welcome_settings[0]["welcome_enabled"] else "Disabled",
-        )
-        embed.add_field(
-            name="Ping on Welcome",
-            value="Enabled" if welcome_settings[0]["ping_on_join"] else "Disabled",
-        )
+        if welcome_settings:
+            embed.add_field(
+                name="Welcome Message",
+                value=welcome_settings[0]["embed_message"] if welcome_settings else "None",
+            )
+            embed.add_field(
+                name="Welcome Channel",
+                value=interaction.guild.get_channel(
+                    welcome_settings[0]["welcome_channel"]
+                ).mention if welcome_settings[0]["welcome_channel"] != 0 else "None",
+            )
+            embed.add_field(
+                name="Welcomes Enabled",
+                value="Enabled" if welcome_settings[0]["welcome_enabled"] else "Disabled",
+            )
+            embed.add_field(
+                name="Ping on Welcome",
+                value="Enabled" if welcome_settings[0]["ping_on_join"] else "Disabled",
+            )
+        else:
+            embed.add_field(
+                name="Welcome Message",
+                value="None",
+            )
+            embed.add_field(
+                name="Welcome Channel",
+                value="None",
+            )
+            embed.add_field(
+                name="Welcomes Enabled",
+                value="Disabled",
+            )
+            embed.add_field(
+                name="Ping on Welcome",
+                value="Disabled",
+            )
         await interaction.response.edit_message(
             embed=embed,
             view=WelcomeView(self.bot, welcome_settings)
