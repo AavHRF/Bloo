@@ -907,7 +907,7 @@ class SettingsView(discord.ui.View):
             name="Welcome Channel",
             value=interaction.guild.get_channel(
                 welcome_settings[0]["welcome_channel"]
-            ).mention if welcome_settings else "None",
+            ).mention if welcome_settings[0]["welcome_channel"] != 0 else "None",
         )
         embed.add_field(
             name="Welcomes Enabled",

@@ -15,14 +15,14 @@ CREATE TABLE IF NOT EXISTS guild_settings (
 );
 
 CREATE TABLE IF NOT EXISTS nsv_settings (
-    guild_id BIGINT,
-    guest_role BIGINT,
-    resident_role BIGINT,
-    wa_resident_role BIGINT,
-    verified_role BIGINT,
+    guild_id BIGINT NOT NULL DEFAULT 0,
+    guest_role BIGINT NOT NULL DEFAULT 0,
+    resident_role BIGINT NOT NULL DEFAULT 0,
+    wa_resident_role BIGINT NOT NULL DEFAULT 0,
+    verified_role BIGINT NOT NULL DEFAULT 0,
     region TEXT,
-    welcome_message TEXT,
-    force_verification BOOLEAN,
+    welcome_message TEXT NOT NULL DEFAULT 'Welcome to the server!',
+    force_verification BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (guild_id)
 );
 
@@ -37,10 +37,10 @@ CREATE TABLE IF NOT EXISTS nation_dump (
 
 CREATE TABLE IF NOT EXISTS welcome_settings (
     guild_id BIGINT,
-    welcome_channel BIGINT,
-    welcome_enabled BOOLEAN,
-    ping_on_join BOOLEAN,
-    embed_message VARCHAR(500),
+    welcome_channel BIGINT DEFAULT 0,
+    welcome_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    ping_on_join BOOLEAN NOT NULL DEFAULT FALSE,
+    embed_message VARCHAR(500) DEFAULT 'Welcome to the server!',
     PRIMARY KEY (guild_id)
 );
 
