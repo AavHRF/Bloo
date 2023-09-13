@@ -441,8 +441,7 @@ class PaginateWL(discord.ui.View):
     async def staff_options(
             self, interaction: discord.Interaction, button: discord.ui.Button
     ):
-        nsl_staff = interaction.guild.get_role(414822801397121035)
-        if nsl_staff not in interaction.user.roles:
+        if self.nsl_staff not in interaction.user.roles:
             self.staff_options.disabled = True
             await interaction.response.edit_message(view=self)
             await interaction.followup.send(
@@ -586,8 +585,7 @@ class Watchlist(commands.Cog):
         self.bot = bot
 
     @app_commands.command(description="View the Watchlist")
-    @app_commands.guilds(*[414822188273762306, 280231120598073344])
-    @app_commands.default_permissions(administrator=True)
+    @app_commands.default_permissions(ban_members=True)
     async def watchlist(self, interaction: discord.Interaction):
         watchlist = await self.bot.fetch("SELECT * FROM watchlist")
         watchlistitems = []
