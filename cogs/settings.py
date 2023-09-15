@@ -754,6 +754,32 @@ class GuildSettingsView(discord.ui.View):
     ):
         await interaction.response.edit_message(embed=main_settings(), view=SettingsView(self.bot))
 
+    @discord.ui.button(
+        label="Enable Watchlist Alerts",
+        style=discord.ButtonStyle.danger,
+        custom_id="watchlist_alerts",
+        emoji="🔔",
+        row=4,
+    )
+    async def watchlist_alerts(
+            self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        await self.bot.execute(
+            "UPDATE guild_settings SET watchlist_alerts = $1 WHERE guild_id = $2",
+            not self.internal_settings["watchlist_alerts"],
+        )
+        self.list_settings = await self.bot.fetch(
+            "SELECT * FROM guild_settings WHERE guild_id = $1", interaction.guild.id
+        )
+        self.internal_settings = self.list_settings[0]
+        embed = interaction.message.embeds[0]
+        embed.set_field_at(
+            3,
+            name="Watchlist Alerts",
+            value="Enabled" if self.internal_settings["watchlist_alerts"] else "Disabled",
+        )
+        await interaction.response.edit_message(embed=embed, view=self)
+
 
 class SettingsView(discord.ui.View):
     def __init__(self, bot: Bloo):
@@ -872,6 +898,10 @@ class SettingsView(discord.ui.View):
                 value=interaction.guild.get_channel(
                     guild_settings[0]["admin_channel"]
                 ).mention if guild_settings[0]["admin_channel"] != 0 else "None",
+            )
+            embed.add_field(
+                name="Watchlist Alerts",
+                value="Enabled" if guild_settings[0]["watchlist_alerts"] else "Disabled",
             )
         else:
             embed = discord.Embed(
