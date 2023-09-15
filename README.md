@@ -1,4 +1,7 @@
 # Bloo
+
+[Support Server](https://discord.gg/tFVVrAZErq) | [Invite Bloo](https://ptb.discord.com/api/oauth2/authorize?client_id=1033625714483806269&permissions=8&scope=applications.commands%20bot) 
+
 Welcome to the repository for Bloo, a Discord bot for NationStates. If you're interested in running your own instance, read on, however, 
 this repository is primarily hosted in accordance with the [site staff policy](https://forum.nationstates.net/viewtopic.php?p=40690135#p40690135) on scripting and technical
 development as a staff member.
