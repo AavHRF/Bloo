@@ -767,6 +767,7 @@ class GuildSettingsView(discord.ui.View):
         await self.bot.execute(
             "UPDATE guild_settings SET watchlist_alerts = $1 WHERE guild_id = $2",
             not self.internal_settings["watchlist_alerts"],
+            interaction.guild.id,
         )
         self.list_settings = await self.bot.fetch(
             "SELECT * FROM guild_settings WHERE guild_id = $1", interaction.guild.id
