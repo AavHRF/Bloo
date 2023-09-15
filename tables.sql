@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS guild_settings (
     administrator_role BIGINT,
     moderator_role BIGINT,
     admin_channel BIGINT,
-    log_channel BIGINT
+    log_channel BIGINT,
+    watchlist_alerts BOOLEAN NOT NULL DEFAULT FALSE,
 );
 
 CREATE TABLE IF NOT EXISTS nsv_settings (
