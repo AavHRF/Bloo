@@ -1,8 +1,7 @@
 import discord
 from discord.ext import commands
 from framework.bot import Bloo
-import watchlist
-
+from watchlist import watchlist_embed
 
 class Listeners(commands.Cog):
     def __init__(self, bot: Bloo):
@@ -115,7 +114,7 @@ class Listeners(commands.Cog):
                     return  # No need to proceed at this point, they're banned.
                 else:  # Watchlist ID match, but not a spam account.
                     # Use the watchlist embed generator utility function
-                    embed = watchlist.watchlist_embed(record[0])
+                    embed = watchlist_embed(record[0])
                     # Alert the admins.
                     if guild_settings[0]["admin_channel"] == 0:
                         return
@@ -133,7 +132,7 @@ class Listeners(commands.Cog):
                             "SELECT * FROM watchlist WHERE known_nations = $1 OR primary_name = $1",
                             f"%{nation}%",
                         )
-                        embed = watchlist.watchlist_embed(record[0])
+                        embed = watchlist_embed(record[0])
                         if guild_settings[0]["admin_channel"] == 0:
                             return
                         await member.guild.get_channel(
@@ -149,7 +148,7 @@ class Listeners(commands.Cog):
                     "SELECT * FROM watchlist WHERE known_names = $1 OR primary_name = $1",
                     f"%{member.global_name}%"
                 )
-                embed = watchlist.watchlist_embed(record[0])
+                embed = watchlist_embed(record[0])
                 if guild_settings[0]["admin_channel"] == 0:
                     return
                 await member.guild.get_channel(
