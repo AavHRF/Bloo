@@ -1,11 +1,11 @@
 import asyncio
 import aiohttp
 import discord
-import .watchlist
 from discord.ext import commands
 from discord import app_commands
 from xml.etree import ElementTree
 from framework.bot import Bloo
+from .watchlist import watchlist_embed
 
 
 class DropSelect(discord.ui.Select):
@@ -143,7 +143,7 @@ class NSV(commands.Cog):
                         ctx.author.global_name
                     )
                 if record:
-                    embed = watchlist.watchlist_embed(record[0])
+                    embed = watchlist_embed(record[0])
                     if guild_settings[0]["admin_channel"] != 0:
                         try:
                             await ctx.guild.get_channel(guild_settings[0]["admin_channel"]).send(
