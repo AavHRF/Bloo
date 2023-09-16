@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from framework.bot import Bloo
-from watchlist import watchlist_embed
+from .watchlist import watchlist_embed
 
 class Listeners(commands.Cog):
     def __init__(self, bot: Bloo):
