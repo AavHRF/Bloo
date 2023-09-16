@@ -1,7 +1,7 @@
 import asyncio
 import aiohttp
 import discord
-import watchlist
+import .watchlist
 from discord.ext import commands
 from discord import app_commands
 from xml.etree import ElementTree
