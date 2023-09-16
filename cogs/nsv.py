@@ -1,6 +1,7 @@
 import asyncio
 import aiohttp
 import discord
+import watchlist
 from discord.ext import commands
 from discord import app_commands
 from xml.etree import ElementTree
@@ -43,7 +44,6 @@ class NSV(commands.Cog):
         self.bot = bot
 
     async def auth_call(self, nation: str, token: str) -> bool:
-        print(f"auth_call({nation}, {token})")
         resp: aiohttp.ClientResponse = await self.bot.ns_request(
             {
                 "a": "verify",
@@ -53,13 +53,10 @@ class NSV(commands.Cog):
             "GET",
         )
         if not resp.ok:
-            print("not ok")
             return False
         data = await resp.text()
         if "1" in data:
-            print("ok")
             return True
-        print("2nd not ok")
         return False
 
     async def auth_flow(self, ctx: commands.Context, nation: str):
@@ -88,7 +85,7 @@ class NSV(commands.Cog):
             msg: discord.Message = await self.bot.wait_for(
                 "message",
                 check=lambda m: m.author == ctx.author
-                and m.channel == ctx.author.dm_channel,
+                                and m.channel == ctx.author.dm_channel,
                 timeout=180,
             )
         except asyncio.TimeoutError:
@@ -103,6 +100,9 @@ class NSV(commands.Cog):
         )
         welcset = await self.bot.fetch(
             "SELECT * FROM welcome_settings WHERE guild_id = $1", ctx.guild.id
+        )
+        guild_settings = await self.bot.fetch(
+            "SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id
         )
         if not guildbans:
             pass
@@ -119,6 +119,38 @@ class NSV(commands.Cog):
                     embed=embed
                 )
                 return
+
+        if guild_settings[0]["watchlist_alerts"]:
+            if guild_settings[0]["admin_channel"] == 0:
+                pass
+            else:
+                record = None
+                if nation in self.bot.watchlist["nation_names"]:
+                    record = await self.bot.fetch(
+                        "SELECT * FROM watchlist WHERE known_nations % $1 OR primary_name % $1",
+                        f"%{nation}%",
+                    )
+                if ctx.author.id in self.bot.watchlist["discord_ids"]:
+                    record = await self.bot.fetch(
+                        "SELECT * FROM watchlist WHERE known_ids = $1 OR primary_name = $2",
+                        f"%{ctx.author.id}%",
+                        ctx.author.id
+                    )
+                if ctx.author.global_name in self.bot.watchlist["known_names"]:
+                    record = await self.bot.fetch(
+                        "SELECT * FROM watchlist WHERE known_names = $1 OR primary_name = $2",
+                        f"%{ctx.author.global_name}%",
+                        ctx.author.global_name
+                    )
+                if record:
+                    embed = watchlist.watchlist_embed(record[0])
+                    if guild_settings[0]["admin_channel"] != 0:
+                        try:
+                            await ctx.guild.get_channel(guild_settings[0]["admin_channel"]).send(
+                                embed=embed
+                            )
+                        except AttributeError:
+                            pass  # Channel was deleted, ignore
 
         # Now that we have verified the user, we want to check residency / WA status
         resp: aiohttp.ClientResponse = await self.bot.ns_request(
@@ -292,7 +324,7 @@ class NSV(commands.Cog):
                 msg: discord.Message = await self.bot.wait_for(
                     "message",
                     check=lambda m: m.author == ctx.author
-                    and m.channel == ctx.author.dm_channel,
+                                    and m.channel == ctx.author.dm_channel,
                     timeout=60,
                 )
             except asyncio.TimeoutError:
