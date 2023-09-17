@@ -179,7 +179,10 @@ class Listeners(commands.Cog):
                 )
                 embed.set_footer(text=f"ID: {member.id}")
                 try:
-                    await member.guild.get_channel(settings[0]["welcome_channel"]).send(embed=embed)
+                    await member.guild.get_channel(settings[0]["welcome_channel"]).send(
+                        embed=embed,
+                        content=member.mention if settings[0]["ping_on_join"] else None
+                    )
                 except AttributeError:  # Channel was deleted after being set as the welcome channel.
                     await member.guild.get_channel(
                         guild_settings[0]["admin_channel"]
