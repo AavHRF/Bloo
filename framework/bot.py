@@ -37,8 +37,8 @@ class Bloo(commands.Bot):
                 "User-Agent": "Bloo NSV // v.1.4.0 // Owned by nation=united_calanworie"
             }
         )
-        with open("tables.sql") as f:
-            await self.pool.execute(f.read())
+        # with open("tables.sql") as f:
+        #     await self.pool.execute(f.read())
 
         for cog in os.listdir("cogs"):
             try:
@@ -70,12 +70,12 @@ class Bloo(commands.Bot):
                     pass
             for nation_name in record["known_nations"].split(","):
                 try:
-                    nation_names.add(nation_name)
+                    nation_names.add(str(nation_name))
                 except ValueError:
                     pass
             for known_name in record["known_names"].split(","):
                 try:
-                    known_names.add(known_name)
+                    known_names.add(str(known_name))
                 except ValueError:
                     pass
 
