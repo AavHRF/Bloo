@@ -120,37 +120,38 @@ class NSV(commands.Cog):
                 )
                 return
 
-        if guild_settings[0]["watchlist_alerts"]:
-            if guild_settings[0]["admin_channel"] == 0:
-                pass
-            else:
-                record = None
-                if nation in self.bot.watchlist["nation_names"]:
-                    record = await self.bot.fetch(
-                        "SELECT * FROM watchlist WHERE known_nations % $1 OR primary_name % $1",
-                        f"%{nation}%",
-                    )
-                if ctx.author.id in self.bot.watchlist["discord_ids"]:
-                    record = await self.bot.fetch(
-                        "SELECT * FROM watchlist WHERE known_ids = $1 OR primary_name = $2",
-                        f"%{ctx.author.id}%",
-                        ctx.author.id
-                    )
-                if ctx.author.global_name in self.bot.watchlist["known_names"]:
-                    record = await self.bot.fetch(
-                        "SELECT * FROM watchlist WHERE known_names = $1 OR primary_name = $2",
-                        f"%{ctx.author.global_name}%",
-                        ctx.author.global_name
-                    )
-                if record:
-                    embed = watchlist_embed(record[0])
-                    if guild_settings[0]["admin_channel"] != 0:
-                        try:
-                            await ctx.guild.get_channel(guild_settings[0]["admin_channel"]).send(
-                                embed=embed
-                            )
-                        except AttributeError:
-                            pass  # Channel was deleted, ignore
+        if guild_settings:
+            if guild_settings[0]["watchlist_alerts"]:
+                if guild_settings[0]["admin_channel"] == 0:
+                    pass
+                else:
+                    record = None
+                    if nation in self.bot.watchlist["nation_names"]:
+                        record = await self.bot.fetch(
+                            "SELECT * FROM watchlist WHERE known_nations % $1 OR primary_name % $1",
+                            f"%{nation}%",
+                        )
+                    if ctx.author.id in self.bot.watchlist["discord_ids"]:
+                        record = await self.bot.fetch(
+                            "SELECT * FROM watchlist WHERE known_ids = $1 OR primary_name = $2",
+                            f"%{ctx.author.id}%",
+                            ctx.author.id
+                        )
+                    if ctx.author.global_name in self.bot.watchlist["known_names"]:
+                        record = await self.bot.fetch(
+                            "SELECT * FROM watchlist WHERE known_names = $1 OR primary_name = $2",
+                            f"%{ctx.author.global_name}%",
+                            ctx.author.global_name
+                        )
+                    if record:
+                        embed = watchlist_embed(record[0])
+                        if guild_settings[0]["admin_channel"] != 0:
+                            try:
+                                await ctx.guild.get_channel(guild_settings[0]["admin_channel"]).send(
+                                    embed=embed
+                                )
+                            except AttributeError:
+                                pass  # Channel was deleted, ignore
 
         # Now that we have verified the user, we want to check residency / WA status
         resp: aiohttp.ClientResponse = await self.bot.ns_request(
