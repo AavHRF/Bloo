@@ -10,19 +10,30 @@ from framework.bot import Bloo
 from openpyxl import Workbook
 
 
-class developer(commands.Cog):
+class Developer(commands.Cog):
     def __init__(self, bot: Bloo):
         self.bot = bot
 
     @staticmethod
     def linkify(region: str):
-        return f"=HYPERLINK(\"https://www.nationstates.net/region={region}\", \"{region}\")"
+        return f'=HYPERLINK("https://www.nationstates.net/region={region}", "{region}")'
 
     @staticmethod
     def write(audit_list: list):
         wb = Workbook()
         ws: openpyxl.worksheet.worksheet.Worksheet = wb.active
-        ws.append(["Discord ID", "Nation", "Status", "Region (link)", "Delegate", "Delegate Votes", "Numnations", "WANations"])
+        ws.append(
+            [
+                "Discord ID",
+                "Nation",
+                "Status",
+                "Region (link)",
+                "Delegate",
+                "Delegate Votes",
+                "Numnations",
+                "WANations",
+            ]
+        )
         for audit in audit_list:
             ws.append(
                 [
@@ -68,7 +79,7 @@ class developer(commands.Cog):
     @commands.command(name="say", description="Send a message to a channel.")
     @commands.is_owner()
     async def say(
-            self, ctx: commands.Context, channel: discord.TextChannel, *, message: str
+        self, ctx: commands.Context, channel: discord.TextChannel, *, message: str
     ):
         await channel.send(message)
         await ctx.send("Done!", ephemeral=True)
@@ -92,7 +103,7 @@ class developer(commands.Cog):
     async def daily_update(self, ctx: commands.Context):
         now_ts = datetime.datetime.now()
         async with self.bot.session.get(
-                "https://www.nationstates.net/pages/nations.xml.gz"
+            "https://www.nationstates.net/pages/nations.xml.gz"
         ) as resp:
             with open("nations.xml.gz", "wb") as f:
                 f.write(await resp.read())
@@ -142,12 +153,12 @@ class developer(commands.Cog):
             resident_role = guild_obj.get_role(settings[0]["resident_role"])
             verified_role = guild_obj.get_role(settings[0]["verified_role"])
             if any(
-                    [
-                        guest_role is None,
-                        wa_resident_role is None,
-                        resident_role is None,
-                        verified_role is None,
-                    ]
+                [
+                    guest_role is None,
+                    wa_resident_role is None,
+                    resident_role is None,
+                    verified_role is None,
+                ]
             ):
                 print("At least one role in this guild is not set!")
             for member in guild_obj.members:
@@ -156,7 +167,10 @@ class developer(commands.Cog):
                         await member.remove_roles(verified_role)
                     if guest_role in member.roles and guest_role is not None:
                         await member.remove_roles(guest_role)
-                    if wa_resident_role in member.roles and wa_resident_role is not None:
+                    if (
+                        wa_resident_role in member.roles
+                        and wa_resident_role is not None
+                    ):
                         await member.remove_roles(wa_resident_role)
                     if resident_role in member.roles and resident_role is not None:
                         await member.remove_roles(resident_role)
@@ -179,26 +193,50 @@ class developer(commands.Cog):
                         continue
                     if vals[0]["region"] != settings[0]["region"]:
                         status = "guest"
-                        if guest_role not in member_obj.roles and guest_role is not None:
+                        if (
+                            guest_role not in member_obj.roles
+                            and guest_role is not None
+                        ):
                             await member_obj.add_roles(guest_role)
-                        if wa_resident_role in member_obj.roles and wa_resident_role is not None:
+                        if (
+                            wa_resident_role in member_obj.roles
+                            and wa_resident_role is not None
+                        ):
                             await member_obj.remove_roles(wa_resident_role)
-                        if resident_role in member_obj.roles and resident_role is not None:
+                        if (
+                            resident_role in member_obj.roles
+                            and resident_role is not None
+                        ):
                             await member_obj.remove_roles(resident_role)
                     else:
                         if vals[0]["unstatus"] == "WA Member":
                             status = "wa-resident"
-                            if guest_role in member_obj.roles and guest_role is not None:
+                            if (
+                                guest_role in member_obj.roles
+                                and guest_role is not None
+                            ):
                                 await member_obj.remove_roles(guest_role)
-                            if wa_resident_role not in member_obj.roles and wa_resident_role is not None:
+                            if (
+                                wa_resident_role not in member_obj.roles
+                                and wa_resident_role is not None
+                            ):
                                 await member_obj.add_roles(wa_resident_role)
-                            if resident_role not in member_obj.roles and resident_role is not None:
+                            if (
+                                resident_role not in member_obj.roles
+                                and resident_role is not None
+                            ):
                                 await member_obj.add_roles(resident_role)
                         else:
                             status = "resident"
-                            if guest_role in member_obj.roles and guest_role is not None:
+                            if (
+                                guest_role in member_obj.roles
+                                and guest_role is not None
+                            ):
                                 await member_obj.remove_roles(guest_role)
-                            if resident_role not in member_obj.roles and resident_role is not None:
+                            if (
+                                resident_role not in member_obj.roles
+                                and resident_role is not None
+                            ):
                                 await member_obj.add_roles(resident_role)
                     await self.bot.execute(
                         "UPDATE nsv_table SET status = $1 WHERE discord_id = $2 AND guild_id = $3",
@@ -216,7 +254,7 @@ class developer(commands.Cog):
         # Download the region dump
         # noinspection DuplicatedCode
         async with self.bot.session.get(
-                "https://www.nationstates.net/pages/regions.xml.gz"
+            "https://www.nationstates.net/pages/regions.xml.gz"
         ) as resp:
             if resp.status != 200:
                 print("Could not download region dump!")
@@ -264,13 +302,21 @@ class developer(commands.Cog):
                     # Gotta be verified to have roles! Unless you're a senior... then you're exempt. That's a
                     # sekrit tho.
                     if founder_role in member.roles and senior not in member.roles:
-                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | FOUNDER ROLE REMOVED\n")
+                        log.write(
+                            f"{member.name} ({member.id}) | NO NATION VERIFIED | FOUNDER ROLE REMOVED\n"
+                        )
                     if delegate_role in member.roles and senior not in member.roles:
-                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | DELEGATE ROLE REMOVED\n")
+                        log.write(
+                            f"{member.name} ({member.id}) | NO NATION VERIFIED | DELEGATE ROLE REMOVED\n"
+                        )
                     if founder_role in member.roles and senior in member.roles:
-                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | SENIOR FDR EXEMPT\n")
+                        log.write(
+                            f"{member.name} ({member.id}) | NO NATION VERIFIED | SENIOR FDR EXEMPT\n"
+                        )
                     if delegate_role in member.roles and senior in member.roles:
-                        log.write(f"{member.name} ({member.id}) | NO NATION VERIFIED | SENIOR DEL EXEMPT\n")
+                        log.write(
+                            f"{member.name} ({member.id}) | NO NATION VERIFIED | SENIOR DEL EXEMPT\n"
+                        )
                 else:
                     founder = False
                     delegate = False
@@ -280,50 +326,68 @@ class developer(commands.Cog):
                             record["nation"],
                         )
                         if not vals:
-                            log.write(f"{member.name} ({member.id}) | NO REGION RECORDS FOUND\n")
+                            log.write(
+                                f"{member.name} ({member.id}) | NO REGION RECORDS FOUND\n"
+                            )
                             continue
                         if vals[0]["founder"] == record["nation"]:
                             founder = True
                         if vals[0]["wa_delegate"] == record["nation"]:
                             delegate = True
                     if not founder or not delegate:
-                        if founder_role in member.roles and senior not in member.roles and not founder:
-                            log.write(f"{member.name} ({member.id}) | FOUNDER ROLE REMOVED\n")
-                        if delegate_role in member.roles and senior not in member.roles and not delegate:
-                            log.write(f"{member.name} ({member.id}) | DELEGATE ROLE REMOVED\n")
+                        if (
+                            founder_role in member.roles
+                            and senior not in member.roles
+                            and not founder
+                        ):
+                            log.write(
+                                f"{member.name} ({member.id}) | FOUNDER ROLE REMOVED\n"
+                            )
+                        if (
+                            delegate_role in member.roles
+                            and senior not in member.roles
+                            and not delegate
+                        ):
+                            log.write(
+                                f"{member.name} ({member.id}) | DELEGATE ROLE REMOVED\n"
+                            )
                         continue
                     if founder:
                         if founder_role not in member.roles:
-                            log.write(f"{member.name} ({member.id}) | FOUNDER ROLE ADDED\n")
+                            log.write(
+                                f"{member.name} ({member.id}) | FOUNDER ROLE ADDED\n"
+                            )
                         if founder_role in member.roles:
-                            log.write(f"{member.name} ({member.id}) | FDR ROLE EXISTS\n")
+                            log.write(
+                                f"{member.name} ({member.id}) | FDR ROLE EXISTS\n"
+                            )
                     else:
-                        if (
-                                founder_role in member.roles
-                                and senior not in member.roles
-                        ):
-                            log.write(f"{member.name} ({member.id}) | FOUNDER ROLE REMOVED\n")
-                        if (
-                                founder_role in member.roles
-                                and senior in member.roles
-                        ):
-                            log.write(f"{member.name} ({member.id}) | SENIOR FDR EXEMPT\n")
+                        if founder_role in member.roles and senior not in member.roles:
+                            log.write(
+                                f"{member.name} ({member.id}) | FOUNDER ROLE REMOVED\n"
+                            )
+                        if founder_role in member.roles and senior in member.roles:
+                            log.write(
+                                f"{member.name} ({member.id}) | SENIOR FDR EXEMPT\n"
+                            )
                     if delegate:
                         if delegate_role not in member.roles:
-                            log.write(f"{member.name} ({member.id}) | DELEGATE ROLE ADDED\n")
+                            log.write(
+                                f"{member.name} ({member.id}) | DELEGATE ROLE ADDED\n"
+                            )
                         if delegate_role in member.roles:
-                            log.write(f"{member.name} ({member.id}) | DEL ROLE EXISTS\n")
+                            log.write(
+                                f"{member.name} ({member.id}) | DEL ROLE EXISTS\n"
+                            )
                     else:
-                        if (
-                                delegate_role in member.roles
-                                and senior not in member.roles
-                        ):
-                            log.write(f"{member.name} ({member.id}) | DELEGATE ROLE REMOVED\n")
-                        if (
-                                delegate_role in member.roles
-                                and senior in member.roles
-                        ):
-                            log.write(f"{member.name} ({member.id}) | SENIOR DEL EXEMPT\n")
+                        if delegate_role in member.roles and senior not in member.roles:
+                            log.write(
+                                f"{member.name} ({member.id}) | DELEGATE ROLE REMOVED\n"
+                            )
+                        if delegate_role in member.roles and senior in member.roles:
+                            log.write(
+                                f"{member.name} ({member.id}) | SENIOR DEL EXEMPT\n"
+                            )
                     await console.send(
                         f"Updated {member.name} | ID: ({member.id}) STATUS "
                         f"({'FOUNDER' if founder else 'NONFOUNDER'}) ({'DELEGATE' if delegate else 'NONDELEGATE'})"
@@ -352,7 +416,9 @@ class developer(commands.Cog):
             if not region:
                 audit_list.append(
                     {
-                        "discord_id": f"{obj.name}#{obj.discriminator}" if obj else member["discord_id"],
+                        "discord_id": f"{obj.name}#{obj.discriminator}"
+                        if obj
+                        else member["discord_id"],
                         "nation": member["nation"],
                         "status": member["status"],
                         "region": "None",
@@ -365,7 +431,9 @@ class developer(commands.Cog):
             else:
                 audit_list.append(
                     {
-                        "discord_id": f"{obj.name}#{obj.discriminator}" if obj else member["discord_id"],
+                        "discord_id": f"{obj.name}#{obj.discriminator}"
+                        if obj
+                        else member["discord_id"],
                         "nation": member["nation"],
                         "status": member["status"],
                         "region": self.linkify(region[0]["region"]),
@@ -381,4 +449,4 @@ class developer(commands.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(developer(bot))
+    await bot.add_cog(Developer(bot))
