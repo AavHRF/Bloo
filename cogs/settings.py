@@ -825,7 +825,7 @@ class SettingsView(discord.ui.View):
             )
             embed.add_field(
                 name="Region",
-                value=nsv_settings[0]["region"].replace("_", " ").title(),
+                value=nsv_settings[0]["region"].replace("_", " ").title() if nsv_settings[0]["region"] else "None",
             )
             embed.add_field(
                 name="Verified Role",
