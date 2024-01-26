@@ -4,7 +4,7 @@ import uuid
 from discord.ext import commands
 from discord import app_commands
 from framework.bot import Bloo
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 from xml.etree import ElementTree
 
 
@@ -119,12 +119,22 @@ class Utility(commands.Cog):
 
     @commands.guild_only()
     @commands.hybrid_command(with_app_command=True)
-    async def info(self, ctx: commands.Context, member: discord.Member = None):
+    async def info(self, ctx: commands.Context, member: Union[discord.Member, str] = None):
         """
         Gets information about a member
         """
         if not member:
             member = ctx.author
+        if isinstance(member, str):
+            mem_id = await self.bot.fetch(
+                "SELECT discord_id FROM nsv_table WHERE nation = $1 AND guild_id = $2",
+                member.lower().replace(" ", "_"),
+                ctx.guild.id,
+            )
+            if not mem_id:
+                return await ctx.send("That nation is not verified.")
+            member = ctx.guild.get_member(mem_id[0]["discord_id"])
+
         if ctx.guild.id != 414822188273762306:
             nations = await self.bot.fetch(
                 "SELECT nation FROM nsv_table WHERE discord_id = $1 AND guild_id = $2",
