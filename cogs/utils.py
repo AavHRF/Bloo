@@ -133,7 +133,8 @@ class Utility(commands.Cog):
             )
             if not mem_id:
                 return await ctx.send("That nation is not verified.")
-            member = ctx.guild.get_member(mem_id[0]["discord_id"])
+            target = ctx.guild.get_member(mem_id[0]["discord_id"])
+            return await ctx.send(f"The nation {member} is owned by {target.mention}.")
 
         if ctx.guild.id != 414822188273762306:
             nations = await self.bot.fetch(
