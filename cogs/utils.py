@@ -119,22 +119,12 @@ class Utility(commands.Cog):
 
     @commands.guild_only()
     @commands.hybrid_command(with_app_command=True)
-    async def info(self, ctx: commands.Context, member: Union[discord.Member, str] = None):
+    async def info(self, ctx: commands.Context, member: discord.Member = None):
         """
         Gets information about a member
         """
         if not member:
             member = ctx.author
-        if isinstance(member, str):
-            mem_id = await self.bot.fetch(
-                "SELECT discord_id FROM nsv_table WHERE nation = $1 AND guild_id = $2",
-                member.lower().replace(" ", "_"),
-                ctx.guild.id,
-            )
-            if not mem_id:
-                return await ctx.send("That nation is not verified.")
-            target = ctx.guild.get_member(mem_id[0]["discord_id"])
-            return await ctx.send(f"The nation {member} is owned by {target.mention}.")
 
         if ctx.guild.id != 414822188273762306:
             nations = await self.bot.fetch(
@@ -403,6 +393,18 @@ class Utility(commands.Cog):
         embed.set_footer(text=f"Ticket ID: {ticket_id}")
         await user.send(embed=embed)
         await ctx.send("Response sent.")
+
+    @commands.hybrid_command()
+    async def whois(self, ctx: commands.Context, nation: str):
+        mem_id = await self.bot.fetch(
+            "SELECT discord_id FROM nsv_table WHERE nation = $1 AND guild_id = $2",
+            nation.lower().replace(" ", "_"),
+            ctx.guild.id,
+        )
+        if not mem_id:
+            return await ctx.send("That nation is not verified.")
+        target = ctx.guild.get_member(mem_id[0]["discord_id"])
+        return await ctx.send(f"The nation {nation} is owned by {target.mention}.")
 
 
 async def setup(bot: Bloo):
