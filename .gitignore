@@ -3,3 +3,5 @@ poetry.lock
 /.idea
 nations.xml.gz
 /venv
+*.log
+*.pyc
