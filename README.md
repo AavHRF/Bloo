@@ -24,6 +24,7 @@ Setup instructions:
     - openpyxl
   - * for compatibility/ease of use reasons, [`requirements.txt`](requirements.txt) has been added for `pip -m venv` usage. While not encouraged compared to poetry, it is a viable option.
 - Run `./start.sh`. The tables should be automatically built from [tables.sql](tables.sql).
+  - `./start.sh` depends on either `poetry` being installed, __or__ your pip-based virtual environment being in a folder called `venv` in the main directory for Bloo. If neither of those conditions apply, you're on your own.
 
 You must supply a configuration file named `config.json` in the root folder of the repository once you have cloned it. It should look something like the following:
 ```json
