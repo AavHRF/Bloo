@@ -2,3 +2,4 @@ config.json
 poetry.lock
 /.idea
 nations.xml.gz
+/venv

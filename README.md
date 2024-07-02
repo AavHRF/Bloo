@@ -22,6 +22,7 @@ Setup instructions:
     - asyncpg
     - aiolimiter
     - openpyxl
+  - * for compatibility/ease of use reasons, [`requirements.txt`](requirements.txt) has been added for `pip -m venv` usage. While not encouraged compared to poetry, it is a viable option.
 - Run `./start.sh`. The tables should be automatically built from [tables.sql](tables.sql).
 
 You must supply a configuration file named `config.json` in the root folder of the repository once you have cloned it. It should look something like the following:
